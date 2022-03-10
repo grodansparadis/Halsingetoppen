@@ -108,12 +108,22 @@ f.write('  table, th, td {\n')
 f.write('  border: 1px solid black;\n')
 f.write('  padding: 10px;\n')
 f.write('  border-collapse: collapse;}\n')
+f.write('p {\n')
+f.write(' border-bottom:1px dotted;\n')
+f.write(' margin-left:auto;\n')
+f.write(' margin-right:auto;\n')
+f.write(' text-align:left;\n')
+f.write(' width: 60%;\n')
+f.write('}\n')
+f.write('h1 {\n')
+f.write(' text-align:center;\n')
+f.write('}\n')
 f.write('</style>\n')
 f.write('</head><body>\n') 
 f.write('<h1>Topplista Hälsingland ' + str(date.today()) + '</h1>\n')
 
 f.write('<p>Topplista med artister från Hälsingland baserad på Spotifys ')
-f.write('<a href="https://community.spotify.com/t5/Content-Questions/Artist-popularity/td-p/4415259">popularitets index</a> ')
+f.write('<a href="https://community.spotify.com/t5/Content-Questions/Artist-popularity/td-p/4415259">popularitets index (0-100)</a> ')
 f.write('som är konstruerat utifrån hur mycket en artists alla låtar är spelade över tid. Artister som har samma popularitet ')
 f.write('är i sin tur ordnade i antal följare. Vill du att din favoritartist skall komma högre upp på den här listan så följ artisten och ')
 f.write('spela artistens musik. Svårare än så är det inte.</p>')
@@ -121,7 +131,7 @@ f.write('<p>Artisterna som är med har någon form av koppling till Hälsingland
 f.write('mig på email <a href="mailto:akhe@grodansparadis.com">akhe@grodansparadis.com</a> och tala om vilken koppling artisten har till Hälsingland.')
 f.write('<p>Listan kommer att uppdateras på fredagar fortsättningsvis.</p>')
 
-f.write('<table border="1">\n')
+f.write('<p><table border="1">\n')
 f.write('<tr><th>Plats</th><th>Artist</th><th>Popularitet</th><th>Följare</th><th></th></tr>\n')
 
 cnt = 1
@@ -150,9 +160,9 @@ for row in cur.execute('SELECT * FROM artists ORDER BY popularity DESC'):
 
   cnt = cnt + 1
 
-f.write('</table>\n')
+f.write('</table></p>\n')
 
-f.write('<p>Listan skapad av <a href="https://www.akehedman.se/">Åke Hedman</a></p>')
+f.write('<p>Listan sammanställd av <a href="https://www.akehedman.se/">Åke Hedman</a></p>')
 
 f.write('</body></html>\n') 
 f.close()
