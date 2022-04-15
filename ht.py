@@ -1,4 +1,5 @@
 from datetime import date
+import time
 import spotipy
 import sqlite3
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -53,7 +54,11 @@ cur_write = con.cursor()
 for row in cur.execute('SELECT * FROM artists ORDER BY id'):
   print(row[TBL_ID])
   urn = row[TBL_ID]
-  artist = sp.artist(urn)
+  try:
+     artist = sp.artist(urn)
+  except:
+     print("* * * * * * * ------>",urn,"Not found")
+     continue
   print(artist)
   print("Name: ",artist['name'])
   if row[TBL_BINACTIVATE] != 0:
@@ -91,7 +96,7 @@ for row in cur.execute('SELECT * FROM artists ORDER BY id'):
   sqlstr += '" WHERE id = "'
   sqlstr += urn
   sqlstr += '"'
-  print("---->",sqlstr)
+  #print("---->",sqlstr)
   cur_write.execute(sqlstr)  
   con.commit()
   #results = sp.artist_albums(urn, album_type='album,single')
@@ -136,10 +141,20 @@ f.write('<tr><th>Plats</th><th>Artist</th><th>Popularitet</th><th>Följare</th><
 
 cnt = 1
 for row in cur.execute('SELECT * FROM artists ORDER BY popularity DESC'):
+
   urn = row[TBL_ID]
-  artist = sp.artist(urn)
+
   if row[TBL_BINACTIVATE] != 0:
     continue
+
+  try:
+    artist = sp.artist(urn)
+  except:
+    print(row[TBL_NAME])
+    #print(" ------>",artist['name'],urn,"Not found")
+    artist = sp.artist(urn)
+    #continue
+  
   print(str(cnt) + ". " + str(artist['popularity']) + " " + artist['name'] + " (" + str(artist['followers']['total']) + ")")
 
   f.write('<tr><td style="text-align:center"><b>')
@@ -159,6 +174,7 @@ for row in cur.execute('SELECT * FROM artists ORDER BY popularity DESC'):
   f.write('</td></tr>\n')
 
   cnt = cnt + 1
+  #time.sleep(2)
 
 f.write('</table></p>\n')
 
