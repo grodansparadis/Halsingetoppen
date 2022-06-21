@@ -159,10 +159,9 @@ for row in cur.execute('SELECT * FROM artists ORDER BY popularity DESC'):
   try:
     artist = sp.artist(urn)
   except:
-    print(row[TBL_NAME])
-    #print(" ------>",artist['name'],urn,"Not found")
-    artist = sp.artist(urn)
-    #continue
+    print("***** Exception ******* Artist:", row[TBL_NAME])
+    print(" ------>",urn,"Not found")
+    #artist = sp.artist(urn)
   
   print(str(cnt) + ". " + str(artist['popularity']) + " " + artist['name'] + " (" + str(artist['followers']['total']) + ")")
 
