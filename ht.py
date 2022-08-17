@@ -99,9 +99,9 @@ for row in cur.execute('SELECT * FROM artists ORDER BY id'):
   #print("---->",sqlstr)
   cur_write.execute(sqlstr)  
   con.commit()
-  #results = sp.artist_albums(urn, album_type='album,single')
-  #albums = results['items']
-  #while results['next']:
+  # results = sp.artist_albums(urn, album_type='album,single')
+  # albums = results['items']
+  # while results['next']:
   #  results = sp.next(results)
   #  albums.extend(results['items'])
 
