@@ -143,7 +143,8 @@ f.write('är i sin tur ordnade i antal följare. Vill du att din favoritartist s
 f.write('spela artistens musik. Svårare än så är det inte.</p>')
 f.write('<p>Artisterna som är med har någon form av koppling till Hälsingland. Saknar du en artist skicka artistens Spotifylänk till ')
 f.write('mig på email <a href="mailto:akhe@grodansparadis.com">akhe@grodansparadis.com</a> och tala om vilken koppling artisten har till Hälsingland.')
-f.write('<p>Listan kommer att uppdateras på fredagar fortsättningsvis.</p>')
+f.write('<p>Lista med alla artisters topplåtar finns <a href="songs.html" target="main">här</a>. Spellista med alla Häsingeartisters populäraste låtar finns <a href="https://open.spotify.com/playlist/7zXnbJOPoNFnQmp8JfiwZ4">här</a>.</p>')
+f.write('<p>Listan uppdateras på fredagar.</p>')
 
 f.write('<p><table border="1">\n')
 f.write('<tr><th>Plats</th><th>Artist</th><th>Popularitet</th><th>Följare</th><th></th></tr>\n')
@@ -170,7 +171,7 @@ for row in cur.execute('SELECT * FROM artists ORDER BY popularity DESC'):
   f.write('</b></td><td>')
   f.write('<a href="')
   f.write(artist['external_urls']['spotify'])
-  f.write('">')
+  f.write('"  target="main">')
   f.write(artist['name'])
   f.write('</a></td><td style="text-align:center">')
   f.write(str(artist['popularity']))
