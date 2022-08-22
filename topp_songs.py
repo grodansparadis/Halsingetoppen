@@ -16,6 +16,7 @@ sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
 
 con = sqlite3.connect('toppen.sqlite3')
 
+print("Topp songs")
 f = open('songs.html', 'w')
 f.write('<html><head>\n') 
 f.write('<!-- Global site tag (gtag.js) - Google Analytics -->')
@@ -45,7 +46,7 @@ f.write(' text-align:center;\n')
 f.write('}\n')
 f.write('</style>\n')
 f.write('</head><body>\n') 
-f.write('<h1>Topplista Hälsingland - Spår i alfabetisk ordning</h1>\n')
+f.write('<h1>Topplista Hälsingland - Mest lyssnade spår i alfabetisk ordning</h1>\n')
 
 f.write('<p>Här listas topplistans alla artisters mest lyssnade spår (max tio spår per artist). Eftersom Spotify inte delar antal lysningar per låt listas låtarna i alfabetisk ordning. Spår som finns både som singel och i ett album listas separat om båda är bland de mest avlyssnade.</p>\n')
 
@@ -63,6 +64,7 @@ idx = 0;
 for row in cur.execute('SELECT * FROM tracks ORDER BY name'):  
   urn = row[TBL_ARTIST_ID]
   try:
+     print(urn,row[TBL_NAME])
      artist = sp.artist(urn)
   except:
      print("* * * * * * * ------>",urn,"Not found")
