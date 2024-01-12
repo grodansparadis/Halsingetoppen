@@ -35,13 +35,17 @@ else:
 
 token = util.prompt_for_user_token(
     username=username,
-    scope='playlist-modify-public',     
+    scope='playlist-modify-private',     
     redirect_uri="http://localhost:8888/callback"
 )
 sp = spotipy.Spotify(auth=token)
 
 # Remove all tracks from playlist
-sp.playlist_replace_items(TOPPEN_ID, track_add_lst)
+try:
+  sp.playlist_replace_items(TOPPEN_ID, track_add_lst)
+except:
+  print("Failed to remove old list items!")
+  exit()
 
 scope = 'playlist-modify-public'
 try:
