@@ -52,33 +52,33 @@ con = sqlite3.connect('toppen.sqlite3')
 cur = con.cursor()
 cur_write = con.cursor()
 for row in cur.execute('SELECT * FROM artists ORDER BY id'):
-  print(row[TBL_ID])
+  #print(row[TBL_ID])
   urn = row[TBL_ID]
   try:
      artist = sp.artist(urn)
   except:
-     print("* * * * * * * ------>",urn,"Not found")
+     print("* * * * * * * ------> URN:[",urn,"] Not found")
      continue
-  print(artist)
+  #print(artist)
   print("Name: ",artist['name'])
   if row[TBL_BINACTIVATE] != 0:
     continue
   name = artist['name']
   name = name.replace("\"","''")
-  print("--------------------------------------------------------")
-  print("Popularity: ",artist['popularity'])
+  #print("--------------------------------------------------------")
+  #print("Popularity: ",artist['popularity'])
   popularity = artist['popularity']
-  print("Followers: ",artist['followers']['total'])
+  #print("Followers: ",artist['followers']['total'])
   followers = artist['followers']['total']
-  print("Link: ",artist['external_urls']['spotify'])
+  #print("Link: ",artist['external_urls']['spotify'])
   link = artist['external_urls']['spotify']
   picture_small = ""
   picture_large = ""
   if artist['images'].__len__() > 0:
-    print("Picture large: ",artist['images'][0]['url'])
+    #print("Picture large: ",artist['images'][0]['url'])
     picture_large = artist['images'][0]['url']
   if artist['images'].__len__() > 1:  
-    print("Picture small: ",artist['images'][1]['url'])
+    #print("Picture small: ",artist['images'][1]['url'])
     picture_small = artist['images'][1]['url']
   print("\n")
   sqlstr = 'UPDATE artists SET name = "'
