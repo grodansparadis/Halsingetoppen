@@ -60,7 +60,7 @@ for row in cur.execute('SELECT * FROM artists ORDER BY id'):
      print("* * * * * * * ------> URN:[",urn,"] Not found")
      continue
   #print(artist)
-  print("Name: ",artist['name'])
+print("Name: ",artist['name'])
   if row[TBL_BINACTIVATE] != 0:
     continue
   name = artist['name']
