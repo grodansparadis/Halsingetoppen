@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Redigera {{ track.name }} - Hälsingetoppen Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('tracks') }}">Låtar</a></li>
+                <li class="breadcrumb-item active">Redigera {{ track.name }}</li>
+            </ol>
+        </nav>
+        
+        <h1><i class="fas fa-edit me-2"></i>Redigera låt</h1>
+        <p class="text-muted">Uppdatera låtinformation</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Låtinformation</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Låtnamn <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ track.name }}" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="popularity" class="form-label">Popularitet (0-100)</label>
+                                <input type="number" class="form-control" id="popularity" name="popularity" 
+                                       value="{{ track.popularity or 0 }}" min="0" max="100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="album_type" class="form-label">Album typ</label>
+                                <select class="form-select" id="album_type" name="album_type">
+                                    <option value="">Välj typ</option>
+                                    <option value="album" {% if track.album_type == 'album' %}selected{% endif %}>Album</option>
+                                    <option value="single" {% if track.album_type == 'single' %}selected{% endif %}>Singel</option>
+                                    <option value="compilation" {% if track.album_type == 'compilation' %}selected{% endif %}>Samling</option>
+                                    <option value="appears_on" {% if track.album_type == 'appears_on' %}selected{% endif %}>Medverkar på</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="url" class="form-label">Spotify-länk</label>
+                                <input type="url" class="form-control" id="url" name="url" value="{{ track.url or '' }}"
+                                       placeholder="https://open.spotify.com/track/...">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="release_date" class="form-label">Utgivningsdatum</label>
+                                <input type="date" class="form-control" id="release_date" name="release_date" 
+                                       value="{{ track.release_date if track.release_date and track.release_date|length == 10 else '' }}">
+                                <div class="form-text">
+                                    {% if track.release_date and track.release_date|length != 10 %}
+                                        Nuvarande värde: {{ track.release_date }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <a href="{{ url_for('tracks') }}" class="btn btn-secondary me-2">Avbryt</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Spara ändringar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Låtinformation</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td><strong>Spotify ID:</strong></td>
+                        <td><code>{{ track.id }}</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Artist:</strong></td>
+                        <td>
+                            <a href="{{ url_for('artist_detail', artist_id=track.artist_id) }}" class="text-decoration-none">
+                                {{ track.artist_name or 'Okänd artist' }}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aktuell popularitet:</strong></td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-{{ 'success' if track.popularity > 50 else 'warning' if track.popularity > 20 else 'secondary' }}" 
+                                     style="width: {{ track.popularity }}%">
+                                    {{ track.popularity }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                
+                {% if track.url %}
+                    <a href="{{ track.url }}" target="_blank" class="btn btn-spotify btn-sm w-100 mt-2">
+                        <i class="fab fa-spotify me-1"></i>Öppna på Spotify
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb me-2"></i>Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="small">
+                    <li>Popularitetspoäng uppdateras vanligtvis automatiskt från Spotify</li>
+                    <li>Album typ hjälper till att kategorisera innehållet</li>
+                    <li>Utgivningsdatum kan vara i olika format (år, år-månad, eller fullständigt datum)</li>
+                    <li>Spotify-länkar bör vara i formatet <code>https://open.spotify.com/track/...</code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

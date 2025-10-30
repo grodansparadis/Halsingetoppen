@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Artister - Hälsingetoppen Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-users me-2"></i>Artister</h1>
+                <p class="text-muted">Hantera artister i databasen</p>
+            </div>
+            <a href="{{ url_for('add_artist') }}" class="btn btn-success">
+                <i class="fas fa-user-plus me-2"></i>Lägg till artist
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search and filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Sök artist</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Sök efter artistnamn...">
+            </div>
+            <div class="col-md-2">
+                <label for="sort" class="form-label">Sortera efter</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="popularity" {% if sort_by == 'popularity' %}selected{% endif %}>Popularitet</option>
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Namn</option>
+                    <option value="followers" {% if sort_by == 'followers' %}selected{% endif %}>Följare</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="order" class="form-label">Ordning</label>
+                <select class="form-select" id="order" name="order">
+                    <option value="desc" {% if order == 'desc' %}selected{% endif %}>Fallande</option>
+                    <option value="asc" {% if order == 'asc' %}selected{% endif %}>Stigande</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="show_inactive" name="show_inactive" value="true" {% if show_inactive %}checked{% endif %}>
+                    <label class="form-check-label" for="show_inactive">
+                        Visa inaktiva
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Sök
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Artists table -->
+<div class="card">
+    <div class="card-body">
+        {% if artists %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Bild</th>
+                            <th>Artist</th>
+                            <th>Popularitet</th>
+                            <th>Följare</th>
+                            <th>Status</th>
+                            <th>Åtgärder</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for artist in artists %}
+                        <tr class="{% if artist.bInactivate %}table-secondary{% endif %}">
+                            <td>
+                                {% if artist.picture_small %}
+                                    <img src="{{ artist.picture_small }}" alt="{{ artist.name }}" class="artist-image">
+                                {% else %}
+                                    <div class="artist-image bg-light d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('artist_detail', artist_id=artist.id) }}" class="text-decoration-none fw-bold">
+                                    {{ artist.name }}
+                                </a>
+                                {% if artist.link %}
+                                    <br>
+                                    <a href="{{ artist.link }}" target="_blank" class="btn btn-sm btn-spotify text-decoration-none">
+                                        <i class="fab fa-spotify me-1"></i>Spotify
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if artist.popularity > 50 else 'warning' if artist.popularity > 20 else 'secondary' }}">
+                                    {{ artist.popularity }}
+                                </span>
+                            </td>
+                            <td>{{ "{:,}".format(artist.followers) if artist.followers else 0 }}</td>
+                            <td>
+                                {% if artist.bInactivate %}
+                                    <span class="badge bg-danger">Inaktiv</span>
+                                {% else %}
+                                    <span class="badge bg-success">Aktiv</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('artist_detail', artist_id=artist.id) }}" class="btn btn-outline-primary" title="Visa detaljer">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('edit_artist', artist_id=artist.id) }}" class="btn btn-outline-secondary" title="Redigera">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" title="Ta bort" 
+                                            onclick="confirmDelete('{{ artist.id }}', '{{ artist.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5>Inga artister hittades</h5>
+                <p class="text-muted">
+                    {% if search %}
+                        Inga artister matchade din sökning "{{ search }}".
+                    {% else %}
+                        Det finns inga artister i databasen ännu.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('add_artist') }}" class="btn btn-success">
+                    <i class="fas fa-user-plus me-2"></i>Lägg till första artist
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bekräfta borttagning</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Är du säker på att du vill ta bort artisten <strong id="deleteArtistName"></strong>?</p>
+                <p class="text-danger"><small>Detta kommer även att ta bort alla associerade låtar.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Ta bort
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(artistId, artistName) {
+    document.getElementById('deleteArtistName').textContent = artistName;
+    document.getElementById('deleteForm').action = '/artist/' + artistId + '/delete';
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

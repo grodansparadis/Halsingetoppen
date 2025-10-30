@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hälsingetoppen - 2025-10-30</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 1200px;
+        }
+        
+        .header-section {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .header-section h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+        
+        .artist-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .artist-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .position-badge {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        
+        .artist-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #f8f9fa;
+            flex-shrink: 0;
+        }
+        
+        .artist-info {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        
+        .artist-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+            text-decoration: none;
+        }
+        
+        .artist-name:hover {
+            color: #667eea;
+        }
+        
+        .stats-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .stat-item.followers {
+            background: linear-gradient(135deg, #00b894, #00a085);
+        }
+        
+        /* Mobil-optimering */
+        @media (max-width: 768px) {
+            .main-container { 
+                margin: 0.5rem; 
+                padding: 0.75rem; 
+            }
+            .artist-card { 
+                padding: 0.75rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+            .stats-container { 
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            .stat-item {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+            .artist-name {
+                font-size: 1.1rem;
+            }
+            .position-badge {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+            .artist-image {
+                width: 50px;
+                height: 50px;
+            }
+            .header-section h1 {
+                font-size: 1.8rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-container { 
+                margin: 0.25rem; 
+                padding: 0.5rem; 
+            }
+            .artist-card {
+                padding: 0.5rem;
+            }
+            .artist-name {
+                font-size: 1rem;
+            }
+            .position-badge {
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+            .artist-image {
+                width: 40px;
+                height: 40px;
+            }
+            .stats-container {
+                gap: 0.25rem;
+            }
+            .stat-item {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <div class="header-section">
+                <h1><i class="fas fa-trophy me-3"></i>Hälsingetoppen</h1>
+                <h2>Topplista 2025-10-30</h2>
+                <p class="mb-0">De populäraste artisterna från Hälsingland</p>
+            </div>
+            
+            <div class="alert alert-info mb-4">
+                <h5><i class="fas fa-info-circle me-2"></i>Förhandsvisning</h5>
+                <p class="mb-0">Detta är en förhandsvisning av den nya mobilvänliga designen med befintlig data från databasen.</p>
+            </div>
+
+            <div class="artist-card">
+                <div class="position-badge">1</div>
+                <img src="https://i.scdn.co/image/ab6761610000517453835e3606d53fc048e6dac8" alt="The Hives" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4DToQR3aKrHQSSRzSz8Nzt" target="_blank" class="artist-name">The Hives</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>59 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>892,237 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">2</div>
+                <img src="https://i.scdn.co/image/ab67616100005174293f7f4aebb31292f607bf3b" alt="Amaranthe" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2KaW48xlLnXC2v8tvyhWsa" target="_blank" class="artist-name">Amaranthe</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>56 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>620,707 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">3</div>
+                <img src="https://i.scdn.co/image/ab676161000051746451fd9b87034e34cc245952" alt="KIDDO" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5pXe6yFchq1oyYK3rq2A8i" target="_blank" class="artist-name">KIDDO</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>56 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>33,591 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">4</div>
+                <img src="https://i.scdn.co/image/ab676161000051746b5c2d4c519c4dff4a4eb49c" alt="Dynazty" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5deRBvKxJssHVa9n6B7tWV" target="_blank" class="artist-name">Dynazty</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>51 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>122,892 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">5</div>
+                <img src="https://i.scdn.co/image/ab67616100005174ac73d922274894ca861ea1b5" alt="Bisken" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/1g78KNbyP5nmgmrLnWIOYf" target="_blank" class="artist-name">Bisken</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>51 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>19,218 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">6</div>
+                <img src="https://i.scdn.co/image/ab6761610000517415896b67a6576aa8ee9f6cb3" alt="The Hooters" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/7uhvDINTTiD0XBrP9fquN1" target="_blank" class="artist-name">The Hooters</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>47 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>104,015 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">7</div>
+                <img src="https://i.scdn.co/image/ab67616100005174e01c687c2c587f7c43dd0729" alt="Bloodbound" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6nf7iwR6AoROxfUKZWd1r6" target="_blank" class="artist-name">Bloodbound</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>45 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>125,058 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">8</div>
+                <img src="https://i.scdn.co/image/ab67616100005174b78686144a2f642b143fbc1b" alt="The Hellacopters" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/1lsXuaLnHnfL7GoJXKkUtH" target="_blank" class="artist-name">The Hellacopters</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>43 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>134,603 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">9</div>
+                <img src="https://i.scdn.co/image/ab67616100005174655988b3418d50c5960d3494" alt="Klara Hammarström" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/52xiNtpaYcZ5jRQ2fqmPI6" target="_blank" class="artist-name">Klara Hammarström</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>43 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>53,890 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">10</div>
+                <img src="https://i.scdn.co/image/ab67616100005174804c8dbc07d1b1c159cd42eb" alt="Entombed" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2pnezMcaiTHfGmgmGQjLsB" target="_blank" class="artist-name">Entombed</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>42 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>280,276 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">11</div>
+                <img src="https://i.scdn.co/image/ab67616100005174f6d401659a745880117a1f75" alt="BlackJack" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0NRCBhMWztpOQkRkrepakm" target="_blank" class="artist-name">BlackJack</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>42 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>34,869 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">12</div>
+                <img src="https://i.scdn.co/image/ab676161000051741999f6bda5c4c438bc4c1473" alt="Symphony Of Sweden" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6AvBsDOrRn8rAdJdj3srdJ" target="_blank" class="artist-name">Symphony Of Sweden</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>42 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>19,732 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">13</div>
+                <img src="https://i.scdn.co/image/ab67616100005174ef014d7d826ffa2ad6d437a1" alt="The Cruel Intentions" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/3RKn3P56kkewba1s6QpyDk" target="_blank" class="artist-name">The Cruel Intentions</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>42 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>16,840 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">14</div>
+                <img src="https://i.scdn.co/image/ab6772690000dd22716d5f8f559b25146d633c15" alt="Jan Johansson" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6DEfX2tZzx9iANmaErvLGf" target="_blank" class="artist-name">Jan Johansson</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>41 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>58,154 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">15</div>
+                <img src="https://i.scdn.co/image/ab6761610000517436be2457c5bcb815eaf23c95" alt="Kikki Danielsson" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/3ktAhWMnoYiz6UpBEKfv5i" target="_blank" class="artist-name">Kikki Danielsson</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>41 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>28,077 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">16</div>
+                <img src="https://i.scdn.co/image/ab676161000051746079b592c1691d54c342d72a" alt="Kerstin Ljungström" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5OoHiZhOXBrB73x6TixINe" target="_blank" class="artist-name">Kerstin Ljungström</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>41 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>5,543 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">17</div>
+                <img src="https://i.scdn.co/image/ab67616100005174bd8118f64e1fde9116333404" alt="Vildhjarta" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0z4ODfFM8PGE0A9r0tZ75J" target="_blank" class="artist-name">Vildhjarta</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>40 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>137,531 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">18</div>
+                <img src="https://i.scdn.co/image/ab67616100005174117ed4dc6fbeb8bca6e82920" alt="Helmut Schenker" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6wf5DKFK08Qx5d11LNhesK" target="_blank" class="artist-name">Helmut Schenker</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>40 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,803 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">19</div>
+                <img src="https://i.scdn.co/image/ab67616100005174967d3e4803cd144832ac3bf6" alt="Wendy Marcini" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4CaTfk4pRkpA8A9gXamYg2" target="_blank" class="artist-name">Wendy Marcini</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>39 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>4,526 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">20</div>
+                <img src="https://i.scdn.co/image/ab676161000051749ae56e6617a63740a93c8201" alt="GRANNJÄNTAN" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/68F1zsaJ2m6HuKqtJz9kaZ" target="_blank" class="artist-name">GRANNJÄNTAN</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>39 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,560 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">21</div>
+                <img src="https://i.scdn.co/image/ab67616100005174d7aac9038ba6a47ff88e0bfa" alt="Peter Jöback" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/3fA5zBQWEa0uzYo43SvXaj" target="_blank" class="artist-name">Peter Jöback</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>38 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>80,223 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">22</div>
+                <img src="https://i.scdn.co/image/ab6761610000517493c657732c3e6901847fdc1b" alt="Garmarna" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/7ED7dE68y0YZGpyXcuiRsI" target="_blank" class="artist-name">Garmarna</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>35 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>84,947 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">23</div>
+                <img src="https://i.scdn.co/image/ab67616100005174987a89701cdf1656928b76e9" alt="Black River Delta" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6wuLyOna5Zjh2OYb0ZtLey" target="_blank" class="artist-name">Black River Delta</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>35 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>14,476 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">24</div>
+                <img src="https://i.scdn.co/image/ab67616100005174bb66df33a44700c818ce2488" alt="Ensemble Yria" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6FQvuaWRVSZaGxmBxI0wmR" target="_blank" class="artist-name">Ensemble Yria</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>34 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,663 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">25</div>
+                <img src="https://i.scdn.co/image/ab676161000051741f79f11cf3d85ce1bfb71975" alt="The Hollow Pines" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0pL05IoGLWHRW0OgQYxIJq" target="_blank" class="artist-name">The Hollow Pines</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>34 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>396 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">26</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02721c8e646ea4ff5315215de9" alt="Lasse Lindh" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4ehBGotbRDOgqcrUomjJyd" target="_blank" class="artist-name">Lasse Lindh</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>33 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>25,165 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">27</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02b5f8fbc0119d5cd69d543dd9" alt="Lill-Babs" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/1YlYLkI3GlVDFSQGjMXWbt" target="_blank" class="artist-name">Lill-Babs</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>33 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>14,603 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">28</div>
+                <img src="https://i.scdn.co/image/ab676161000051746dd90f72576fed28ea2cf5ab" alt="Annika Wickihalder" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6GmRbmLWorahORMpb3T7of" target="_blank" class="artist-name">Annika Wickihalder</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>32 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>5,868 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">29</div>
+                <img src="https://i.scdn.co/image/5cfa8203ed4fb53447763c052fc4ab9fdc8ea74a" alt="Åsa Jinder" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0WIJklwnefNN9A2XeHqTxG" target="_blank" class="artist-name">Åsa Jinder</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>31 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>12,390 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">30</div>
+                <img src="https://i.scdn.co/image/ab67616100005174ef9583ec79894593bf13e7e5" alt="Roger Pontare" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2eo54qMMNjVgFIxwhKfijG" target="_blank" class="artist-name">Roger Pontare</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>31 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>11,851 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">31</div>
+                <img src="https://i.scdn.co/image/ab676161000051741a606e4cff3cf39df66e7efe" alt="HOUSE OF SAY" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/3zyk3cvf0fwq5NpceYW8gp" target="_blank" class="artist-name">HOUSE OF SAY</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>31 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>6,027 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">32</div>
+                <img src="https://i.scdn.co/image/ab67616100005174dc77a92d6511e203606c6afe" alt="Sofia Karlsson" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2tKGISNf0bei0IxfLQGMEt" target="_blank" class="artist-name">Sofia Karlsson</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>30 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>28,547 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">33</div>
+                <img src="https://i.scdn.co/image/ab6761610000517411d2e0c98be6c13f4df48e0a" alt="Little Jinder" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5QYBoZAoupoPPuFB1KHfx0" target="_blank" class="artist-name">Little Jinder</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>30 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>19,983 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">34</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e029d862ffcbaed857f33e2aba4" alt="Jannez" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6qdSQgDA1E73SA8ihkXAjd" target="_blank" class="artist-name">Jannez</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>30 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>6,975 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">35</div>
+                <img src="https://i.scdn.co/image/ab676161000051740348a4a988768fc04eeb48fa" alt="Nassim Al Fakir" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6dW62vIwebEJmO2f6cTLGK" target="_blank" class="artist-name">Nassim Al Fakir</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>30 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>5,023 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">36</div>
+                <img src="https://i.scdn.co/image/ab6761610000517404a427e687c6ac6b3ba62da3" alt="April Snow" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/7HMZinZS1LbGtnmELcvVmQ" target="_blank" class="artist-name">April Snow</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>30 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>4,658 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">37</div>
+                <img src="https://i.scdn.co/image/ab67616100005174e4ea71aa63efcd062eb2d844" alt="The Kristet Utseende" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/08RaUMtreeTHss1QsLkfPe" target="_blank" class="artist-name">The Kristet Utseende</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>29 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>13,409 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">38</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e027d2d1f0bb91d3dd0e1ae3ac8" alt="Perssons Pack" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0H8GJ568lnrhJZRqqeroUa" target="_blank" class="artist-name">Perssons Pack</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>29 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>10,084 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">39</div>
+                <img src="https://i.scdn.co/image/ab6761610000517453fbd3ebc2ace03caaecd73a" alt="Östen Med Resten" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/20nKo8C8M0JpIznby9Dv5p" target="_blank" class="artist-name">Östen Med Resten</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>28 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>7,811 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">40</div>
+                <img src="https://i.scdn.co/image/ab6761610000517415a168c9d724fe2b8ca118e5" alt="Engmans Kapell" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/44RPeghKstDd42rYnzyZ8v" target="_blank" class="artist-name">Engmans Kapell</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>28 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>7,308 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">41</div>
+                <img src="https://i.scdn.co/image/ab67616100005174032a210a24248e848ec6a07d" alt="Irya Gmeyner" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/3No4e9xTmvsjOeORRfPi6x" target="_blank" class="artist-name">Irya Gmeyner</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>28 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,245 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">42</div>
+                <img src="https://i.scdn.co/image/7b270c11095953da22be70086989058926fba9e9" alt="Miah Persson" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/3hcyVVem6bxNJH1gx2Ww5F" target="_blank" class="artist-name">Miah Persson</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>27 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,935 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">43</div>
+                <img src="https://i.scdn.co/image/ab67616100005174aaba15d729c818f081f0126b" alt="Casper The Ghost" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2FympPk5bcBe37Sp4VIs4L" target="_blank" class="artist-name">Casper The Ghost</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>26 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>11,069 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">44</div>
+                <img src="https://i.scdn.co/image/ab6761610000517414411b6cea6780e6ed6c148c" alt="Nadja Evelina" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2LiW9iY4e5Mtfaoj5bdaRC" target="_blank" class="artist-name">Nadja Evelina</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>26 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>8,435 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">45</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02957d8e97c1c35c07b79d5f8f" alt="Iggesundsgänget" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4NnuPiZ7BhKVKiuHJoENJY" target="_blank" class="artist-name">Iggesundsgänget</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>26 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>3,934 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">46</div>
+                <img src="https://i.scdn.co/image/ab67616100005174861246df2369b9c06dfd7e1d" alt="Natalie Haas" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/41sqaarfB2kCWssI6jM10V" target="_blank" class="artist-name">Natalie Haas</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>26 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>3,899 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">47</div>
+                <img src="https://i.scdn.co/image/ab6761610000517472990009d5d5dc4269b20255" alt="Hanna Hedlund" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5Czd0MlWc1v6blcW7zVwGq" target="_blank" class="artist-name">Hanna Hedlund</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>25 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,936 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">48</div>
+                <img src="https://i.scdn.co/image/ab676161000051746c71145d332ff631c0e7421a" alt="MarEk" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/46bFhzja4DjfGE3sv00te0" target="_blank" class="artist-name">MarEk</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>25 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>517 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">49</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02848e80d35524ddfe407475d7" alt="Niklas Karlsson" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5dYTF0kETzMSgmsEtUOxu8" target="_blank" class="artist-name">Niklas Karlsson</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>25 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>313 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">50</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e0266883de1880635abea72a036" alt="Maskinisten" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/7EqcInpJPb4pRMPyEvUKRR" target="_blank" class="artist-name">Maskinisten</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>23 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>6,373 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">51</div>
+                <img src="https://i.scdn.co/image/ab67616100005174dee44311c928a56d257b3bc6" alt="Victoria Silvstedt" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4SLPHiAAddBuuXS8bD11XP" target="_blank" class="artist-name">Victoria Silvstedt</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>23 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,461 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">52</div>
+                <img src="https://i.scdn.co/image/ab67616100005174244eaaa577ec80472f9e1df8" alt="Moto Boy" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0sKQUWhiNgW8KBnnM0O7FL" target="_blank" class="artist-name">Moto Boy</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>22 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>12,531 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">53</div>
+                <img src="https://i.scdn.co/image/ab67616100005174f563605a014c614d16c829ef" alt="Py Bäckman" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4iYb9WsP5S7klNrPAMgjj3" target="_blank" class="artist-name">Py Bäckman</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>22 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>6,073 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">54</div>
+                <img src="https://i.scdn.co/image/ab67616100005174321d47408dbf032e0b979418" alt="Emilia Lindberg" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/7e0IUqYVXewhv4dFDiP7cu" target="_blank" class="artist-name">Emilia Lindberg</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>22 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,562 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">55</div>
+                <img src="https://i.scdn.co/image/ab676161000051748213b4fa6d235ba5151906f7" alt="Avatarium" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2W5ONRbOs5vXUbedSWJQlA" target="_blank" class="artist-name">Avatarium</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>21 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>27,495 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">56</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e025eb9894c6b5955e7620f7cff" alt="Brainbombs" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2oIIjz25IqVy5YKU7yVhFq" target="_blank" class="artist-name">Brainbombs</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>21 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>18,763 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">57</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02e81aa09d9c893a9c63117f51" alt="Monica Törnell" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2mzcDa3H7xrIikDmF9rFwN" target="_blank" class="artist-name">Monica Törnell</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>21 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>7,704 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">58</div>
+                <img src="https://i.scdn.co/image/ab67616100005174798b941d43bdaa337cd65888" alt="Thomas von Wachenfeldt" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4j1RfF21tNCNxcPnzGqISV" target="_blank" class="artist-name">Thomas von Wachenfeldt</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>21 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,517 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">59</div>
+                <img src="https://i.scdn.co/image/ab676161000051743997b36aaa7c107c9b72dcbf" alt="Anders F. Rönnblom" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6oR29GMMjXQ5aZCM8LwYB3" target="_blank" class="artist-name">Anders F. Rönnblom</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>20 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>4,735 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">60</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02986d1fcabd340b50ea8fc166" alt="Traste Lindéns Kvintett" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/01Vt0BRbTARedL3RNZthg2" target="_blank" class="artist-name">Traste Lindéns Kvintett</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>20 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>4,178 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">61</div>
+                <img src="https://i.scdn.co/image/ab6761610000517417ba00199a9a22c24d8c2964" alt="Anna Sahlene" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4dNOj2smSK7guw4JeUW1uW" target="_blank" class="artist-name">Anna Sahlene</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>20 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>3,640 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">62</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e025ba9839d711182f7288b0fbd" alt="Blackthorn" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/53SA9tY2dA3UmPeU7GYPwT" target="_blank" class="artist-name">Blackthorn</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>20 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,822 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">63</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e0201095962f539db432fa38311" alt="Family Four" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/59G5sH1IBBPWNAIgOzfpGs" target="_blank" class="artist-name">Family Four</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>20 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,780 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">64</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e0280bf7a136a7fcb6e42607ab9" alt="Hälsingefyr" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/18wAcWA8BZMSlPvv9sMxVh" target="_blank" class="artist-name">Hälsingefyr</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>20 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,127 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">65</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e023b34228eeeed38f8cab86931" alt="Jive" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/1NtPfn7T6OI2ELI1lG7tt6" target="_blank" class="artist-name">Jive</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>20 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,455 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">66</div>
+                <img src="https://i.scdn.co/image/ab67616100005174097f5758c1d61f343219de19" alt="Draze" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/64MGkui6smX2VENoeh6D3Q" target="_blank" class="artist-name">Draze</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>20 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,143 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">67</div>
+                <img src="https://i.scdn.co/image/ab676161000051744cf3d458e688147c45fbfaf5" alt="Selma & Gustaf" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0tUfqypVbl1m19xo9T9yUL" target="_blank" class="artist-name">Selma & Gustaf</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>19 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,587 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">68</div>
+                <img src="https://i.scdn.co/image/ab67616100005174b8b2feff2e44ce055da01258" alt="Lina Hedlund" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0ISkgZ0y3iY60jiG3SQgvN" target="_blank" class="artist-name">Lina Hedlund</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>19 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,843 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">69</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02265f263c9d0ee2e79f2c2f0e" alt="Arne Qvick" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5JTfr1w00ivwdEKpCFYJiL" target="_blank" class="artist-name">Arne Qvick</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>19 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,832 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">70</div>
+                <img src="https://i.scdn.co/image/ab6761610000517435127e5853c510d62ed19f2d" alt="Emma Svensson" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/03V0mTSmPHxp7pnJhKFE1h" target="_blank" class="artist-name">Emma Svensson</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>18 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,324 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">71</div>
+                <img src="https://i.scdn.co/image/ab676161000051749a96ce4fba29841a56499952" alt="Horse Of Troja" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2XaBcUKVsHhjg5IqUCCMnq" target="_blank" class="artist-name">Horse Of Troja</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>18 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>479 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">72</div>
+                <img src="https://i.scdn.co/image/ab676161000051742729b1fa5a6f98ccd31e7ab9" alt="The Lightbringer of Sweden" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6u53rgRUxnjgX8gyyqRsml" target="_blank" class="artist-name">The Lightbringer of Sweden</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>17 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>8,078 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">73</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e028a0e1fabbed53931727a4a62" alt="Gösta ''Snoddas'' Nordgren" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/55Mv9PuCTRfExD5y0l4Hg1" target="_blank" class="artist-name">Gösta ''Snoddas'' Nordgren</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>17 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,000 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">74</div>
+                <img src="https://i.scdn.co/image/ab67616100005174af1f7e6c9a772db935964ed6" alt="Kingen" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4xF1WqgmgWBbLEXUWZZxne" target="_blank" class="artist-name">Kingen</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>17 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,813 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">75</div>
+                <img src="https://i.scdn.co/image/ab6761610000517417310b5e3b8d91953b0ab983" alt="Daniel & The River" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2IZMU2MukAtPC7bFZlArDD" target="_blank" class="artist-name">Daniel & The River</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>17 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,137 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">76</div>
+                <img src="https://i.scdn.co/image/ab67616100005174e67990ddc24b4f5367afd66f" alt="Samantha Ohlanders" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/1JlYeVJ5xycoQRdC3r2NuX" target="_blank" class="artist-name">Samantha Ohlanders</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>17 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>520 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">77</div>
+                <img src="https://i.scdn.co/image/2176acdf774f591d18976c82ead73f64b7aefdb5" alt="Triakel" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6rAMWMC0kgbz7WFM8IYtrR" target="_blank" class="artist-name">Triakel</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>16 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>8,386 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">78</div>
+                <img src="https://i.scdn.co/image/ab67616100005174ca3c1c25f2d0d3542c694922" alt="Neverstore" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4PibNOKNAaMPvwrgBoXMj3" target="_blank" class="artist-name">Neverstore</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>16 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>6,062 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">79</div>
+                <img src="https://i.scdn.co/image/ab67616100005174bea667b05a2e7e76b91658f9" alt="Elias O" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4gruioW9HyVcwMorsHDoib" target="_blank" class="artist-name">Elias O</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>16 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>291 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">80</div>
+                <img src="https://i.scdn.co/image/ab67616100005174486712ef353c4ecd10b17044" alt="Tad Morose" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4MfQTKjLQSOdiYCiYGGg11" target="_blank" class="artist-name">Tad Morose</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>15 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>13,568 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">81</div>
+                <img src="https://i.scdn.co/image/ab67616100005174f813b469438e73eff77cae9f" alt="Wolverine" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/1fXQxAIAbCfSOhslwmipCp" target="_blank" class="artist-name">Wolverine</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>15 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>9,190 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">82</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02653cf756457fa099d82f4089" alt="Sigge Hill" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/1tkSfDb60IvakjNC6i9Gdw" target="_blank" class="artist-name">Sigge Hill</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>15 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,553 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">83</div>
+                <img src="https://i.scdn.co/image/ab6761610000517413d841008c171a29cec468fe" alt="Hata Som Lejon" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0Tdayxonpn7TNV0fNq1EMw" target="_blank" class="artist-name">Hata Som Lejon</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>15 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>984 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">84</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02dce38d24abf5f17c8c7c05de" alt="Totalitär" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5hA6CCJ5BYfvz25xQ7TWvX" target="_blank" class="artist-name">Totalitär</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>14 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>17,015 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">85</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02a00bfbb704def2ad1f40297d" alt="Morgana Lefay" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6wEcnwWPcae1cLkZDtGTJJ" target="_blank" class="artist-name">Morgana Lefay</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>14 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>12,196 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">86</div>
+                <img src="https://i.scdn.co/image/ab67616100005174a394fac546e6210a7e0855cf" alt="DJ Roine" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6qFz7RbRuwQE0UlouqD6aV" target="_blank" class="artist-name">DJ Roine</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>14 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,339 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">87</div>
+                <img src="https://i.scdn.co/image/ab67616100005174ce26c687fb300a5e1c8bc52d" alt="Quilty" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5gKWa3DBFTUJqvCmdvJehb" target="_blank" class="artist-name">Quilty</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>14 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,295 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">88</div>
+                <img src="https://i.scdn.co/image/ab67616100005174fc07494c6f35603c5c6d6ad7" alt="Northern Resonance" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6xMbUUCiUhAtBQj9KkSi9j" target="_blank" class="artist-name">Northern Resonance</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>14 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,437 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">89</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02be4fbb25458ca065277c6ba6" alt="Madison" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2xwwnu2TF8wxO9pQEiL3sC" target="_blank" class="artist-name">Madison</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>13 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>3,492 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">90</div>
+                <img src="https://i.scdn.co/image/ab676161000051744c3b68bd43684f6689a03969" alt="The Unkool Hillbillies" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6dqbz8gDstv4JLLqYmeaIG" target="_blank" class="artist-name">The Unkool Hillbillies</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>13 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,086 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">91</div>
+                <img src="https://i.scdn.co/image/ab6761610000517436e4f1073091355c07adf5ae" alt="Lena Jonsson" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6cXjUqtPkQVBydNQhZFo9t" target="_blank" class="artist-name">Lena Jonsson</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>13 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,195 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">92</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e0205a8fe869e8a38fff2a0b3a0" alt="Bengan Janson" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/0R8GsgU3KTgqeXDec16uNp" target="_blank" class="artist-name">Bengan Janson</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>13 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,184 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">93</div>
+                <img src="https://i.scdn.co/image/ab6761610000517447d8360c92a12d904140f234" alt="KAINOABEL" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/4C5BlNc1vRCnDrOgxIImJF" target="_blank" class="artist-name">KAINOABEL</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>13 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>744 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">94</div>
+                <img src="https://i.scdn.co/image/ab67616100005174d304a9a196e207e80d5d1e23" alt="Lobster" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/3TJQIHUi0ImS9M2NCrHdFN" target="_blank" class="artist-name">Lobster</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>13 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>738 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">95</div>
+                <img src="https://i.scdn.co/image/ab67616d00001e02f6f4a6fd4ffcc3aad384a95e" alt="Sone Banger" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/2mL5ChPZAHDPpkgZ8pTRou" target="_blank" class="artist-name">Sone Banger</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>13 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>432 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">96</div>
+                <img src="https://i.scdn.co/image/ab67616100005174321c00f0db5310a6b88e14c5" alt="Speedy The Spider" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/259qubgszdxsxmqAVVOw5w" target="_blank" class="artist-name">Speedy The Spider</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>13 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>348 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">97</div>
+                <img src="https://i.scdn.co/image/ab676161000051748f41c5eb94f893d3092262b5" alt="Velveteen Queen" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/6kbpkEoKjzTFJQkS3gpF9D" target="_blank" class="artist-name">Velveteen Queen</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>12 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>3,273 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">98</div>
+                <img src="https://i.scdn.co/image/ab67616100005174074edfda6a5e6face0e1176d" alt="Sver" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/7dQDM46xbOVp16wbN6SpiQ" target="_blank" class="artist-name">Sver</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>12 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>2,346 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">99</div>
+                <img src="https://i.scdn.co/image/ab676161000051747be5fc2bdcd1ed3f6690edb8" alt="Lena Jonsson Trio" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/5tOLlanbZyg24EC9uCYUmD" target="_blank" class="artist-name">Lena Jonsson Trio</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>12 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>1,515 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="artist-card">
+                <div class="position-badge">100</div>
+                <img src="https://i.scdn.co/image/ab6761610000517456a50eba8a15aeaa5a0caae3" alt="Zander Nord" class="artist-image" onerror="this.src='https://via.placeholder.com/60x60/667eea/white?text=♪'">
+                <div class="artist-info">
+                    <a href="https://open.spotify.com/artist/05XM48ydrfsElQtsBt1kUi" target="_blank" class="artist-name">Zander Nord</a>
+                    <div class="stats-container">
+                        <span class="stat-item">
+                            <i class="fas fa-fire me-1"></i>12 popularitet
+                        </span>
+                        <span class="stat-item followers">
+                            <i class="fas fa-users me-1"></i>466 följare
+                        </span>
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Synkronisera låtar - Hälsingetoppen Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('generate_menu') }}">Generera</a></li>
+                <li class="breadcrumb-item active">Synkronisera låtar</li>
+            </ol>
+        </nav>
+        
+        <h1><i class="fab fa-spotify me-2"></i>Synkronisera låtar från Spotify</h1>
+        <p class="text-muted">Hämta top tracks från Spotify för alla artister</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Inställningar för synkronisering</h5>
+            </div>
+            <div class="card-body">
+                {% if not spotify_configured %}
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Spotify ej konfigurerat</h6>
+                        <p class="mb-0">
+                            Spotify API är inte konfigurerat. Ställ in miljövariablerna 
+                            <code>SPOTIPY_CLIENT_ID</code> och <code>SPOTIPY_CLIENT_SECRET</code> 
+                            för att använda denna funktion.
+                        </p>
+                    </div>
+                {% else %}
+                    <form method="POST">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="update_playlist" name="update_playlist">
+                                <label class="form-check-label" for="update_playlist">
+                                    <strong>Uppdatera Spotify-spellista</strong>
+                                </label>
+                                <div class="form-text">
+                                    Uppdaterar den officiella Hälsingetoppen-spellistan på Spotify med nya låtar.
+                                    <br><strong>OBS:</strong> Kräver användarautentisering och speciella behörigheter.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-circle me-2"></i>Viktigt att veta</h6>
+                            <ul class="mb-0">
+                                <li><strong>Alla befintliga låtar raderas först</strong> från databasen</li>
+                                <li>Hämtar max 10 top tracks per artist</li>
+                                <li>Processen kan ta 10-20 minuter för {{ artist_count }} artister</li>
+                                <li>Kräver stabil internet-anslutning</li>
+                                <li>Rate limiting tillämpas för att respektera Spotify API</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="text-end">
+                            <a href="{{ url_for('generate_menu') }}" class="btn btn-secondary me-2">Avbryt</a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-sync me-1"></i>Starta synkronisering
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Vad händer?</h5>
+            </div>
+            <div class="card-body">
+                <h6>Synkroniseringsprocess:</h6>
+                <ol class="small">
+                    <li>Raderar alla befintliga låtar från databasen</li>
+                    <li>Går igenom alla aktiva artister</li>
+                    <li>Hämtar top 10 tracks för varje artist från Spotify</li>
+                    <li>Sparar låtinformation i databasen</li>
+                    <li>Uppdaterar spellista (om valt)</li>
+                </ol>
+                
+                <hr>
+                
+                <h6>Låtinformation som hämtas:</h6>
+                <ul class="small">
+                    <li>Låtnamn</li>
+                    <li>Popularitetspoäng</li>
+                    <li>Album-typ (single, album, etc.)</li>
+                    <li>Spotify-URL</li>
+                    <li>Utgivningsdatum</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar me-2"></i>Aktuell status</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td><strong>Artister:</strong></td>
+                        <td>{{ artist_count or 'Okänt' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Befintliga låtar:</strong></td>
+                        <td>{{ track_count or 'Okänt' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Spotify-status:</strong></td>
+                        <td>
+                            {% if spotify_configured %}
+                                <span class="badge bg-success">Konfigurerat</span>
+                            {% else %}
+                                <span class="badge bg-danger">Ej konfigurerat</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Beräknad tid:</strong></td>
+                        <td>{{ estimated_time }} min</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

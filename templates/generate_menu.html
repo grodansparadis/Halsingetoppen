@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Generera listor - Hälsingetoppen Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-cogs me-2"></i>Generera listor och synkronisera</h1>
+        <p class="text-muted">Skapa HTML-listor och synkronisera data med Spotify</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-trophy me-2"></i>Generera topplista</h5>
+            </div>
+            <div class="card-body">
+                <p>Skapa HTML-topplista med artister rankade efter popularitet.</p>
+                <ul class="small">
+                    <li>Sorterar efter popularitet och följare</li>
+                    <li>Inkluderar artistbilder från Spotify</li>
+                    <li>Uppdaterar med dagens datum</li>
+                    <li>Kan uppdatera artist-data från Spotify först</li>
+                </ul>
+                <a href="{{ url_for('generate_toplist') }}" class="btn btn-primary w-100">
+                    <i class="fas fa-file-code me-1"></i>Generera topplista
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-music me-2"></i>Generera låtlista</h5>
+            </div>
+            <div class="card-body">
+                <p>Skapa HTML-lista med alla låtar i alfabetisk ordning.</p>
+                <ul class="small">
+                    <li>Alla artisters top tracks</li>
+                    <li>Alfabetisk sortering</li>
+                    <li>Länkar till Spotify</li>
+                    <li>Album-typ och utgivningsdatum</li>
+                </ul>
+                <form method="POST" action="{{ url_for('generate_songs') }}">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-file-code me-1"></i>Generera låtlista
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fab fa-spotify me-2"></i>Synkronisera låtar</h5>
+            </div>
+            <div class="card-body">
+                <p>Hämta top tracks från Spotify för alla artister.</p>
+                <ul class="small">
+                    <li>Hämtar top 10 tracks per artist</li>
+                    <li>Uppdaterar popularitet</li>
+                    <li>Ersätter all låtdata</li>
+                    <li>Kan uppdatera Spotify-spellista</li>
+                </ul>
+                <a href="{{ url_for('sync_tracks') }}" class="btn btn-info w-100">
+                    <i class="fas fa-sync me-1"></i>Synkronisera låtar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-download me-2"></i>Ladda ner genererade filer</h5>
+            </div>
+            <div class="card-body">
+                <p>Här kan du ladda ner de senast genererade HTML-filerna:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if 'topplista' in request.args %}
+                            <a href="{{ url_for('download_file', filename='topplista.html') }}" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-download me-1"></i>Ladda ner topplista.html
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {% if 'songs' in request.args %}
+                            <a href="{{ url_for('download_file', filename='songs.html') }}" class="btn btn-outline-success">
+                                <i class="fas fa-download me-1"></i>Ladda ner songs.html
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle me-2"></i>Information</h6>
+            <ul class="mb-0">
+                <li><strong>Topplista</strong>: Motsvarar funktionaliteten i <code>ht.py</code></li>
+                <li><strong>Låtlista</strong>: Motsvarar funktionaliteten i <code>topp_songs.py</code></li>
+                <li><strong>Synkronisering</strong>: Motsvarar funktionaliteten i <code>tracks.py</code></li>
+                <li>Alla operationer kräver aktiv internet-anslutning för Spotify API</li>
+                <li>Synkronisering kan ta flera minuter beroende på antal artister</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

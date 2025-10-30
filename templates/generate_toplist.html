@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Generera topplista - Hälsingetoppen Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('generate_menu') }}">Generera</a></li>
+                <li class="breadcrumb-item active">Topplista</li>
+            </ol>
+        </nav>
+        
+        <h1><i class="fas fa-trophy me-2"></i>Generera HTML-topplista</h1>
+        <p class="text-muted">Skapa en HTML-fil med topplistan över Hälsingeartister</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Inställningar för topplista</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="update_spotify" name="update_spotify" checked>
+                            <label class="form-check-label" for="update_spotify">
+                                <strong>Uppdatera artist-data från Spotify först</strong>
+                            </label>
+                            <div class="form-text">
+                                Hämtar senaste popularitet, följarantal och bilder från Spotify API. 
+                                Rekommenderas för att få aktuell data, men tar längre tid.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-clock me-2"></i>Viktigt att veta</h6>
+                        <ul class="mb-0">
+                            <li>Uppdatering från Spotify kan ta 5-10 minuter för {{ artist_count }} artister</li>
+                            <li>HTML-filen sparas som <code>topplista-ÅÅÅÅ-MM-DD.html</code></li>
+                            <li>Endast aktiva artister inkluderas i listan</li>
+                            <li>Kräver aktiv internet-anslutning</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="text-end">
+                        <a href="{{ url_for('generate_menu') }}" class="btn btn-secondary me-2">Avbryt</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play me-1"></i>Starta generering
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Vad skapas?</h5>
+            </div>
+            <div class="card-body">
+                <p class="small">
+                    HTML-filen kommer att innehålla:
+                </p>
+                <ul class="small">
+                    <li>Komplett topplista sorterad efter popularitet</li>
+                    <li>Artistnamn med länkar till Spotify</li>
+                    <li>Popularitetspoäng (0-100)</li>
+                    <li>Antal följare</li>
+                    <li>Artistbilder (100x100px)</li>
+                    <li>Styling med CSS</li>
+                    <li>Google Analytics-kod</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>Teknisk information</h6>
+                <p class="small">
+                    Denna funktion replikerar exakt samma funktionalitet som <code>ht.py</code>-skriptet, 
+                    men med ett användarvänligt webbgränssnitt.
+                </p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar me-2"></i>Aktuell status</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td><strong>Totalt artister:</strong></td>
+                        <td>{{ artist_count or 'Okänt' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aktiva artister:</strong></td>
+                        <td>{{ active_artists or 'Okänt' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Spotify-status:</strong></td>
+                        <td>
+                            {% if spotify_configured %}
+                                <span class="badge bg-success">Konfigurerat</span>
+                            {% else %}
+                                <span class="badge bg-warning">Ej konfigurerat</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

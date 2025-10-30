@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Lägg till artist - Hälsingetoppen Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('artists') }}">Artister</a></li>
+                <li class="breadcrumb-item active">Lägg till artist</li>
+            </ol>
+        </nav>
+        
+        <h1><i class="fas fa-user-plus me-2"></i>Lägg till artist</h1>
+        <p class="text-muted">Lägg till en ny artist i databasen</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Artistinformation</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="spotify_url" class="form-label">Spotify URL/URI (valfritt)</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="spotify_url" name="spotify_url" 
+                                   placeholder="https://open.spotify.com/artist/... eller spotify:artist:...">
+                            <button type="button" class="btn btn-outline-secondary" onclick="searchSpotify()">
+                                <i class="fas fa-search"></i> Sök
+                            </button>
+                        </div>
+                        <div class="form-text">Om du anger en Spotify-URL hämtas artistinformation automatiskt.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Artistnamn <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="text-end">
+                        <a href="{{ url_for('artists') }}" class="btn btn-secondary me-2">Avbryt</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>Spara artist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fab fa-spotify me-2"></i>Sök på Spotify</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="spotify_search" placeholder="Sök artistnamn...">
+                </div>
+                <button type="button" class="btn btn-spotify w-100" onclick="performSpotifySearch()">
+                    <i class="fas fa-search me-1"></i>Sök
+                </button>
+                
+                <div id="search_results" class="mt-3" style="display: none;">
+                    <h6>Sökresultat:</h6>
+                    <div id="results_container" class="search-results"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="small">
+                    <li>Använd Spotify-sökningen för att hitta artister snabbt</li>
+                    <li>Spotify-URL kan vara i formatet <code>open.spotify.com/artist/...</code> eller <code>spotify:artist:...</code></li>
+                    <li>Om du använder Spotify-integration hämtas popularitet, följare och bild automatiskt</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function searchSpotify() {
+    const url = document.getElementById('spotify_url').value.trim();
+    if (!url) return;
+    
+    // Extract artist ID from URL
+    let artistId = null;
+    if (url.includes('spotify:artist:')) {
+        artistId = url.split('spotify:artist:')[1];
+    } else if (url.includes('open.spotify.com/artist/')) {
+        artistId = url.split('open.spotify.com/artist/')[1].split('?')[0];
+    }
+    
+    if (!artistId) {
+        alert('Ogiltig Spotify URL');
+        return;
+    }
+    
+    // For now, just extract the name from URL if possible
+    // In a real implementation, you'd make an API call here
+    document.getElementById('name').focus();
+}
+
+function performSpotifySearch() {
+    const query = document.getElementById('spotify_search').value.trim();
+    if (!query) return;
+    
+    fetch(`/api/search_spotify?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Fel vid sökning: ' + data.error);
+                return;
+            }
+            
+            displaySearchResults(data.results);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Fel vid sökning');
+        });
+}
+
+function displaySearchResults(artists) {
+    const container = document.getElementById('results_container');
+    const resultsDiv = document.getElementById('search_results');
+    
+    if (artists.length === 0) {
+        container.innerHTML = '<p class="text-muted">Inga resultat hittades</p>';
+        resultsDiv.style.display = 'block';
+        return;
+    }
+    
+    let html = '';
+    artists.forEach(artist => {
+        html += `
+            <div class="spotify-result" onclick="selectArtist('${artist.id}', '${artist.name.replace(/'/g, "\\'")}', '${artist.url}')">
+                ${artist.image ? `<img src="${artist.image}" alt="${artist.name}">` : '<div style="width: 40px; height: 40px; background: #ddd; border-radius: 50%; display: inline-block; margin-right: 10px;"></div>'}
+                <div style="display: inline-block; vertical-align: top;">
+                    <strong>${artist.name}</strong><br>
+                    <small class="text-muted">Följare: ${artist.followers.toLocaleString()}</small>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    resultsDiv.style.display = 'block';
+}
+
+function selectArtist(id, name, url) {
+    document.getElementById('name').value = name;
+    document.getElementById('spotify_url').value = url;
+    document.getElementById('search_results').style.display = 'none';
+    document.getElementById('spotify_search').value = '';
+}
+
+// Enable search on Enter key
+document.getElementById('spotify_search').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performSpotifySearch();
+    }
+});
+</script>
+{% endblock %}

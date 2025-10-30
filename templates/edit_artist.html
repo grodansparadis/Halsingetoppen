@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Redigera {{ artist.name }} - Hälsingetoppen Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('artists') }}">Artister</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('artist_detail', artist_id=artist.id) }}">{{ artist.name }}</a></li>
+                <li class="breadcrumb-item active">Redigera</li>
+            </ol>
+        </nav>
+        
+        <h1><i class="fas fa-edit me-2"></i>Redigera {{ artist.name }}</h1>
+        <p class="text-muted">Uppdatera artistinformation</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Artistinformation</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Artistnamn <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ artist.name }}" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="popularity" class="form-label">Popularitet (0-100)</label>
+                                <input type="number" class="form-control" id="popularity" name="popularity" 
+                                       value="{{ artist.popularity or 0 }}" min="0" max="100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="followers" class="form-label">Följare</label>
+                                <input type="number" class="form-control" id="followers" name="followers" 
+                                       value="{{ artist.followers or 0 }}" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="link" class="form-label">Spotify-länk</label>
+                        <input type="url" class="form-control" id="link" name="link" value="{{ artist.link or '' }}"
+                               placeholder="https://open.spotify.com/artist/...">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="picture_small" class="form-label">Bild-URL</label>
+                        <input type="url" class="form-control" id="picture_small" name="picture_small" 
+                               value="{{ artist.picture_small or '' }}"
+                               placeholder="https://...">
+                        {% if artist.picture_small %}
+                            <div class="mt-2">
+                                <img src="{{ artist.picture_small }}" alt="Förhandsvisning" class="img-thumbnail" style="max-width: 100px;">
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="inactive" name="inactive" 
+                                   {% if artist.bInactivate %}checked{% endif %}>
+                            <label class="form-check-label" for="inactive">
+                                Markera som inaktiv
+                            </label>
+                            <div class="form-text">Inaktiva artister visas inte på huvudlistan</div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <a href="{{ url_for('artist_detail', artist_id=artist.id) }}" class="btn btn-secondary me-2">Avbryt</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Spara ändringar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Artistinformation</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td><strong>Spotify ID:</strong></td>
+                        <td><code>{{ artist.id }}</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aktuell status:</strong></td>
+                        <td>
+                            {% if artist.bInactivate %}
+                                <span class="badge bg-danger">Inaktiv</span>
+                            {% else %}
+                                <span class="badge bg-success">Aktiv</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+                
+                {% if artist.link %}
+                    <a href="{{ artist.link }}" target="_blank" class="btn btn-spotify btn-sm w-100 mt-2">
+                        <i class="fab fa-spotify me-1"></i>Öppna på Spotify
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb me-2"></i>Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="small">
+                    <li>Popularitetspoäng uppdateras vanligtvis automatiskt från Spotify</li>
+                    <li>Följarantalet ändras konstant på Spotify</li>
+                    <li>Inaktiva artister visas fortfarande i databasen men inte på offentliga listor</li>
+                    <li>Bild-URL:er hämtas vanligtvis från Spotify</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

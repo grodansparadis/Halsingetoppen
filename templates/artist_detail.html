@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}{{ artist.name }} - Hälsingetoppen Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('artists') }}">Artister</a></li>
+                <li class="breadcrumb-item active">{{ artist.name }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="d-flex align-items-center">
+            {% if artist.picture_small %}
+                <img src="{{ artist.picture_small }}" alt="{{ artist.name }}" class="me-3" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%;">
+            {% else %}
+                <div class="me-3 bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%;">
+                    <i class="fas fa-user fa-2x text-muted"></i>
+                </div>
+            {% endif %}
+            <div>
+                <h1>{{ artist.name }}</h1>
+                <p class="text-muted mb-1">
+                    {% if artist.bInactivate %}
+                        <span class="badge bg-danger">Inaktiv</span>
+                    {% else %}
+                        <span class="badge bg-success">Aktiv</span>
+                    {% endif %}
+                    <span class="badge bg-primary ms-2">Popularitet: {{ artist.popularity }}</span>
+                    <span class="badge bg-info ms-2">Följare: {{ "{:,}".format(artist.followers) if artist.followers else 0 }}</span>
+                </p>
+                {% if artist.link %}
+                    <a href="{{ artist.link }}" target="_blank" class="btn btn-spotify btn-sm">
+                        <i class="fab fa-spotify me-1"></i>Öppna på Spotify
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <div class="btn-group">
+            <a href="{{ url_for('edit_artist', artist_id=artist.id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-edit me-1"></i>Redigera
+            </a>
+            <button type="button" class="btn btn-outline-danger" onclick="confirmDelete()">
+                <i class="fas fa-trash me-1"></i>Ta bort
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Artist info card -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Artistinformation</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td><strong>Spotify ID:</strong></td>
+                        <td><code>{{ artist.id }}</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Popularitet:</strong></td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-{{ 'success' if artist.popularity > 50 else 'warning' if artist.popularity > 20 else 'secondary' }}" 
+                                     style="width: {{ artist.popularity }}%">
+                                    {{ artist.popularity }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Följare:</strong></td>
+                        <td>{{ "{:,}".format(artist.followers) if artist.followers else 0 }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td>
+                            {% if artist.bInactivate %}
+                                <span class="badge bg-danger">Inaktiv</span>
+                            {% else %}
+                                <span class="badge bg-success">Aktiv</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-headphones me-2"></i>Låtar ({{ tracks|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if tracks %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Låt</th>
+                                    <th>Popularitet</th>
+                                    <th>Album typ</th>
+                                    <th>Utgivningsdatum</th>
+                                    <th>Åtgärder</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for track in tracks %}
+                                <tr class="track-row">
+                                    <td>
+                                        <strong>{{ track.name }}</strong>
+                                        {% if track.url %}
+                                            <br>
+                                            <a href="{{ track.url }}" target="_blank" class="btn btn-sm btn-spotify text-decoration-none">
+                                                <i class="fab fa-spotify me-1"></i>Spotify
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if track.popularity > 50 else 'warning' if track.popularity > 20 else 'secondary' }}">
+                                            {{ track.popularity }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ track.album_type or 'N/A' }}</span>
+                                    </td>
+                                    <td>{{ track.release_date or 'N/A' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('edit_track', track_id=track.id) }}" class="btn btn-outline-secondary" title="Redigera">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" title="Ta bort" 
+                                                    onclick="confirmDeleteTrack('{{ track.id }}', '{{ track.name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-headphones fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Inga låtar registrerade för denna artist ännu.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete artist modal -->
+<div class="modal fade" id="deleteArtistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bekräfta borttagning</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Är du säker på att du vill ta bort artisten <strong>{{ artist.name }}</strong>?</p>
+                <p class="text-danger"><small>Detta kommer även att ta bort alla {{ tracks|length }} associerade låtar.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <form method="POST" action="{{ url_for('delete_artist', artist_id=artist.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Ta bort
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete track modal -->
+<div class="modal fade" id="deleteTrackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bekräfta borttagning</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Är du säker på att du vill ta bort låten <strong id="deleteTrackName"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <form id="deleteTrackForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Ta bort
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete() {
+    new bootstrap.Modal(document.getElementById('deleteArtistModal')).show();
+}
+
+function confirmDeleteTrack(trackId, trackName) {
+    document.getElementById('deleteTrackName').textContent = trackName;
+    document.getElementById('deleteTrackForm').action = '/track/' + trackId + '/delete';
+    new bootstrap.Modal(document.getElementById('deleteTrackModal')).show();
+}
+</script>
+{% endblock %}
