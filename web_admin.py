@@ -523,10 +523,15 @@ def generate_toplist():
 def generate_songs():
     """Generate HTML songs list (same as topp_songs.py)"""
     try:
+        print("Starting songs generation...")
         filename = generate_html_songs()
+        print(f"Songs generation completed: {filename}")
         flash(f'HTML songs list generated: {filename}', 'success')
     except Exception as e:
-        flash(f'Error generating songs list: {e}', 'error')
+        print(f"Error in songs generation: {e}")
+        import traceback
+        traceback.print_exc()
+        flash(f'Error generating songs list: {str(e)}', 'error')
     
     return redirect(url_for('generate_menu'))
 

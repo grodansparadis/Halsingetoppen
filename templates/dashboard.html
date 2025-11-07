@@ -78,7 +78,7 @@
                                     <td>
                                         <span class="badge bg-primary">{{ artist.popularity }}</span>
                                     </td>
-                                    <td>{{ "{:,}".format(artist.followers) }}</td>
+                                    <td>{{ "{:,}".format(artist.followers or 0) }}</td>
                                     <td>
                                         <a href="{{ url_for('artist_detail', artist_id=artist.id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-eye"></i>
