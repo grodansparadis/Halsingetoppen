@@ -8,12 +8,30 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import sqlite3
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.exceptions import SpotifyException
 from datetime import datetime, date
 import os
 import time
+import logging
+
+# Import our Spotify utilities
+from spotify_utils import (
+    spotify_request_with_retry,
+    safe_spotify_artist,
+    safe_spotify_artist_top_tracks,
+    safe_spotify_search,
+    rate_limit_delay
+)
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'  # Change this to a random secret key
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Database path
 DB_PATH = 'toppen.sqlite3'
@@ -22,8 +40,9 @@ DB_PATH = 'toppen.sqlite3'
 sp = None
 try:
     sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
-except:
-    print("Warning: Spotify credentials not configured. Some features may not work.")
+    logger.info("Spotify client initialized successfully")
+except Exception as e:
+    logger.warning(f"Spotify credentials not configured: {e}. Some features may not work.")
 
 def get_db_connection():
     """Get database connection"""
@@ -182,8 +201,8 @@ def add_artist():
         # If we have Spotify integration and an ID, fetch data from Spotify
         spotify_data = {}
         if sp and artist_id:
-            try:
-                artist_info = sp.artist(artist_id)
+            artist_info = safe_spotify_artist(sp, artist_id)
+            if artist_info:
                 spotify_data = {
                     'name': artist_info['name'],
                     'popularity': artist_info['popularity'],
@@ -193,8 +212,9 @@ def add_artist():
                 }
                 # Use Spotify data if we have it
                 name = spotify_data['name']
-            except Exception as e:
-                flash(f'Could not fetch Spotify data: {e}', 'warning')
+                logger.info(f"Successfully fetched Spotify data for artist: {name}")
+            else:
+                flash('Could not fetch Spotify data for this artist', 'warning')
         
         # Generate a simple ID if no Spotify ID
         if not artist_id:
@@ -422,25 +442,24 @@ def search_spotify():
     if not query:
         return jsonify({'results': []})
     
-    try:
-        # Spotify search is already case insensitive
-        results = sp.search(q=query, type='artist', limit=10)
-        artists = []
-        
-        for artist in results['artists']['items']:
-            artists.append({
-                'id': artist['id'],
-                'name': artist['name'],
-                'popularity': artist['popularity'],
-                'followers': artist['followers']['total'],
-                'url': artist['external_urls']['spotify'],
-                'image': artist['images'][0]['url'] if artist['images'] else None
-            })
-        
-        return jsonify({'results': artists})
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # Use the safe search function with retry handling
+    results = safe_spotify_search(sp, query, search_type='artist', limit=10)
+    
+    if results is None:
+        return jsonify({'error': 'Failed to search Spotify'}), 500
+    
+    artists = []
+    for artist in results['artists']['items']:
+        artists.append({
+            'id': artist['id'],
+            'name': artist['name'],
+            'popularity': artist['popularity'],
+            'followers': artist['followers']['total'],
+            'url': artist['external_urls']['spotify'],
+            'image': artist['images'][0]['url'] if artist['images'] else None
+        })
+    
+    return jsonify({'results': artists})
 
 @app.route('/generate')
 def generate_menu():
@@ -460,44 +479,53 @@ def generate_toplist():
                 cur = conn.cursor()
                 
                 update_count = 0
+                error_count = 0
                 for row in cur.execute('SELECT * FROM artists ORDER BY id'):
                     urn = row['id']
-                    try:
-                        artist = sp.artist(urn)
-                        print(f"Updating: {artist['name']}")
-                        
-                        if row['bInactivate'] != 0:
-                            continue
-                            
-                        name = artist['name'].replace('"', "''")
-                        popularity = artist['popularity']
-                        followers = artist['followers']['total']
-                        link = artist['external_urls']['spotify']
-                        picture_small = ""
-                        picture_large = ""
-                        
-                        if len(artist['images']) > 0:
-                            picture_large = artist['images'][0]['url']
-                        if len(artist['images']) > 1:
-                            picture_small = artist['images'][1]['url']
-                        
-                        conn.execute('''
-                            UPDATE artists 
-                            SET name = ?, popularity = ?, followers = ?, link = ?, 
-                                picture_small = ?, picture_large = ?
-                            WHERE id = ?
-                        ''', [name, popularity, followers, link, picture_small, picture_large, urn])
-                        
-                        update_count += 1
-                        time.sleep(0.1)  # Rate limiting
-                        
-                    except Exception as e:
-                        print(f"Error updating {urn}: {e}")
+                    
+                    # Use safe Spotify artist call with retry handling
+                    artist = safe_spotify_artist(sp, urn)
+                    if not artist:
+                        logger.error(f"Failed to get artist data for {urn}")
+                        error_count += 1
                         continue
+                    
+                    print(f"Updating: {artist['name']}")
+                    
+                    if row['bInactivate'] != 0:
+                        continue
+                        
+                    name = artist['name'].replace('"', "''")
+                    popularity = artist['popularity']
+                    followers = artist['followers']['total']
+                    link = artist['external_urls']['spotify']
+                    picture_small = ""
+                    picture_large = ""
+                    
+                    if len(artist['images']) > 0:
+                        picture_large = artist['images'][0]['url']
+                    if len(artist['images']) > 1:
+                        picture_small = artist['images'][1]['url']
+                    
+                    conn.execute('''
+                        UPDATE artists 
+                        SET name = ?, popularity = ?, followers = ?, link = ?, 
+                            picture_small = ?, picture_large = ?
+                        WHERE id = ?
+                    ''', [name, popularity, followers, link, picture_small, picture_large, urn])
+                    
+                    update_count += 1
+                    
+                    # Add small delay between requests to be respectful
+                    rate_limit_delay()
                 
                 conn.commit()
                 conn.close()
-                flash(f'Updated {update_count} artists from Spotify', 'success')
+                
+                if error_count > 0:
+                    flash(f'Updated {update_count} artists from Spotify. {error_count} errors encountered.', 'warning')
+                else:
+                    flash(f'Updated {update_count} artists from Spotify', 'success')
             
             # Generate HTML file
             filename = generate_html_toplist()
@@ -535,6 +563,142 @@ def generate_songs():
     
     return redirect(url_for('generate_menu'))
 
+@app.route('/generate/all', methods=['GET', 'POST'])
+def generate_all():
+    """Generate all lists (toplist and songs) in one run"""
+    if request.method == 'POST':
+        update_spotify = request.form.get('update_spotify') == 'on'
+        
+        results = {
+            'toplist_file': None,
+            'songs_file': None,
+            'update_count': 0,
+            'error_count': 0,
+            'errors': []
+        }
+        
+        try:
+            logger.info("Starting batch generation of all lists...")
+            
+            # Step 1: Update artist data from Spotify if requested
+            if update_spotify and sp:
+                logger.info("Updating artist data from Spotify...")
+                conn = get_db_connection()
+                cur = conn.cursor()
+                
+                for row in cur.execute('SELECT * FROM artists ORDER BY id'):
+                    urn = row['id']
+                    
+                    # Use safe Spotify artist call with retry handling
+                    artist = safe_spotify_artist(sp, urn)
+                    if not artist:
+                        logger.error(f"Failed to get artist data for {urn}")
+                        results['error_count'] += 1
+                        results['errors'].append(f"Failed to update artist {urn}")
+                        continue
+                    
+                    print(f"Updating: {artist['name']}")
+                    
+                    if row['bInactivate'] != 0:
+                        continue
+                        
+                    name = artist['name'].replace('"', "''")
+                    popularity = artist['popularity']
+                    followers = artist['followers']['total']
+                    link = artist['external_urls']['spotify']
+                    picture_small = ""
+                    picture_large = ""
+                    
+                    if len(artist['images']) > 0:
+                        picture_large = artist['images'][0]['url']
+                    if len(artist['images']) > 1:
+                        picture_small = artist['images'][1]['url']
+                    
+                    conn.execute('''
+                        UPDATE artists 
+                        SET name = ?, popularity = ?, followers = ?, link = ?, 
+                            picture_small = ?, picture_large = ?
+                        WHERE id = ?
+                    ''', [name, popularity, followers, link, picture_small, picture_large, urn])
+                    
+                    results['update_count'] += 1
+                    
+                    # Add small delay between requests to be respectful
+                    rate_limit_delay()
+                
+                conn.commit()
+                conn.close()
+                logger.info(f"Updated {results['update_count']} artists from Spotify")
+            
+            # Step 2: Generate HTML toplist
+            logger.info("Generating HTML toplist...")
+            try:
+                results['toplist_file'] = generate_html_toplist()
+                logger.info(f"Toplist generated: {results['toplist_file']}")
+            except Exception as e:
+                error_msg = f"Error generating toplist: {str(e)}"
+                logger.error(error_msg)
+                results['errors'].append(error_msg)
+                results['error_count'] += 1
+            
+            # Step 3: Generate HTML songs list
+            logger.info("Generating HTML songs list...")
+            try:
+                results['songs_file'] = generate_html_songs()
+                logger.info(f"Songs list generated: {results['songs_file']}")
+            except Exception as e:
+                error_msg = f"Error generating songs list: {str(e)}"
+                logger.error(error_msg)
+                results['errors'].append(error_msg)
+                results['error_count'] += 1
+            
+            # Prepare success/error messages
+            success_messages = []
+            if results['toplist_file']:
+                success_messages.append(f"HTML toplist generated: {results['toplist_file']}")
+            if results['songs_file']:
+                success_messages.append(f"HTML songs list generated: {results['songs_file']}")
+            if results['update_count'] > 0:
+                success_messages.append(f"Updated {results['update_count']} artists from Spotify")
+            
+            # Flash messages based on results
+            if success_messages:
+                flash(" | ".join(success_messages), 'success')
+            
+            if results['errors']:
+                error_summary = f"{results['error_count']} errors occurred: " + " | ".join(results['errors'][:3])
+                if len(results['errors']) > 3:
+                    error_summary += f" (and {len(results['errors']) - 3} more...)"
+                flash(error_summary, 'warning')
+            
+            logger.info(f"Batch generation completed. Success: {len(success_messages)}, Errors: {results['error_count']}")
+            
+            return redirect(url_for('generate_all'))
+            
+        except Exception as e:
+            error_msg = f'Critical error during batch generation: {str(e)}'
+            logger.error(error_msg)
+            import traceback
+            traceback.print_exc()
+            flash(error_msg, 'error')
+            return redirect(url_for('generate_all'))
+    
+    # Show form - get stats for GET request
+    conn = get_db_connection()
+    artist_count = conn.execute('SELECT COUNT(*) FROM artists').fetchone()[0]
+    active_artists = conn.execute('SELECT COUNT(*) FROM artists WHERE bInactivate = 0 OR bInactivate IS NULL').fetchone()[0]
+    
+    # Check if we have tracks data
+    track_count = conn.execute('SELECT COUNT(*) FROM tracks').fetchone()[0]
+    
+    conn.close()
+    
+    return render_template('generate_all.html', 
+                         artist_count=artist_count,
+                         active_artists=active_artists,
+                         track_count=track_count,
+                         spotify_configured=sp is not None)
+
 @app.route('/sync/tracks', methods=['GET', 'POST'])
 def sync_tracks():
     """Sync tracks from Spotify (same as tracks.py)"""
@@ -559,37 +723,43 @@ def sync_tracks():
             for row in cur.execute('SELECT * FROM artists ORDER BY name, id'):
                 urn = row['id']
                 
-                try:
-                    artist = sp.artist(urn)
-                    tracks = sp.artist_top_tracks(urn)
-                    
-                    if len(tracks['tracks']) == 0:
-                        continue
-                    
-                    for item in tracks['tracks']:
-                        song = item['name'].replace('"', "''")
-                        
-                        conn.execute('''
-                            INSERT INTO tracks (id, artist_id, name, popularity, album_type, url, release_date)
-                            VALUES (?, ?, ?, ?, ?, ?, ?)
-                        ''', [
-                            item['id'],
-                            artist['id'], 
-                            song,
-                            item['popularity'],
-                            item['album']['album_type'],
-                            item['external_urls']['spotify'],
-                            item['album']['release_date']
-                        ])
-                        track_count += 1
-                    
-                    conn.commit()
-                    time.sleep(0.1)  # Rate limiting
-                    
-                except Exception as e:
-                    print(f"Error syncing tracks for {urn}: {e}")
+                # Use safe Spotify calls with retry handling
+                artist = safe_spotify_artist(sp, urn)
+                if not artist:
+                    logger.error(f"Failed to get artist data for {urn}")
                     error_count += 1
                     continue
+                
+                tracks = safe_spotify_artist_top_tracks(sp, urn)
+                if not tracks:
+                    logger.error(f"Failed to get top tracks for {urn}")
+                    error_count += 1
+                    continue
+                
+                if len(tracks['tracks']) == 0:
+                    continue
+                
+                for item in tracks['tracks']:
+                    song = item['name'].replace('"', "''")
+                    
+                    conn.execute('''
+                        INSERT INTO tracks (id, artist_id, name, popularity, album_type, url, release_date)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ''', [
+                        item['id'],
+                        artist['id'], 
+                        song,
+                        item['popularity'],
+                        item['album']['album_type'],
+                        item['external_urls']['spotify'],
+                        item['album']['release_date']
+                    ])
+                    track_count += 1
+                
+                conn.commit()
+                
+                # Add small delay between requests to be respectful
+                rate_limit_delay()
             
             conn.close()
             
@@ -1046,22 +1216,24 @@ def generate_html_toplist():
         cnt = 1
         for row in conn.execute('SELECT * FROM artists WHERE bInactivate = 0 OR bInactivate IS NULL ORDER BY popularity DESC, followers DESC'):
             if sp:
-                try:
-                    artist = sp.artist(row['id'])
+                # Use safe Spotify call with retry handling
+                artist = safe_spotify_artist(sp, row['id'])
+                if artist:
                     name = artist['name']
                     popularity = artist['popularity']
                     followers = artist['followers']['total']
                     spotify_url = artist['external_urls']['spotify']
                     image_url = artist['images'][0]['url'] if len(artist['images']) > 0 else ''
-                except:
-                    # Fallback to database data
+                else:
+                    # Fallback to database data if Spotify call fails
+                    logger.warning(f"Using database data for artist {row['id']} due to Spotify API failure")
                     name = row['name']
                     popularity = row['popularity'] or 0
                     followers = row['followers'] or 0
                     spotify_url = row['link'] or '#'
                     image_url = row['picture_small'] or ''
             else:
-                # Use database data
+                # Use database data when Spotify is not available
                 name = row['name']
                 popularity = row['popularity'] or 0
                 followers = row['followers'] or 0

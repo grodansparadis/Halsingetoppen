@@ -10,7 +10,19 @@ import time
 import sqlite3
 import spotipy
 import spotipy.util as util
+import logging
 from spotipy.oauth2 import SpotifyClientCredentials
+
+# Import our Spotify utilities
+from spotify_utils import (
+    safe_spotify_artist,
+    safe_spotify_artist_top_tracks,
+    rate_limit_delay
+)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 TBL_ID = 0
 TBL_LINK_AREA = 1
@@ -86,17 +98,16 @@ for row in cur.execute('SELECT * FROM artists ORDER BY name,id'):
   # Get artist id
   urn = row[TBL_ID]
 
-  try:
-    artist = sp.artist(urn)
-  except:
-    print("* * * * * * * ------>", urn, "Not found")
+  # Use safe Spotify calls with retry handling
+  artist = safe_spotify_artist(sp, urn)
+  if not artist:
+    logger.error(f"Failed to get artist data for URN: {urn}")
     continue
   
   # Get top tracks for artist
-  try:
-    tracks = sp.artist_top_tracks(urn)    
-  except:
-    print("* * * * * * * ------>", urn, "Not found", artist['name'])
+  tracks = safe_spotify_artist_top_tracks(sp, urn)
+  if not tracks:
+    logger.error(f"Failed to get top tracks for {artist['name']} (URN: {urn})")
     continue
 
   if (len(tracks['tracks']) == 0):
@@ -137,6 +148,9 @@ for row in cur.execute('SELECT * FROM artists ORDER BY name,id'):
       #print(pp['id'])
       print(track_add_lst, len(track_add_lst))
       continue
+
+  # Add rate limiting delay between artists
+  rate_limit_delay()
 
 # try:
 #   print(track_add_lst)

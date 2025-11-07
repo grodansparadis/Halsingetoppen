@@ -2,7 +2,18 @@ from datetime import date
 import time
 import spotipy
 import sqlite3
+import logging
 from spotipy.oauth2 import SpotifyClientCredentials
+
+# Import our Spotify utilities
+from spotify_utils import (
+    safe_spotify_artist,
+    rate_limit_delay
+)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 TBL_ID = 0
 TBL_ARTIST_ID = 1
@@ -63,12 +74,15 @@ cur_write = con.cursor()
 idx = 0;
 for row in cur.execute('SELECT * FROM tracks ORDER BY name'):  
   urn = row[TBL_ARTIST_ID]
-  try:
-     print(urn,row[TBL_NAME])
-     artist = sp.artist(urn)
-  except:
-     print("* * * * * * * ------>",urn,"Not found")
-     continue
+  
+  print(urn,row[TBL_NAME])
+  
+  # Use safe Spotify call with retry handling
+  artist = safe_spotify_artist(sp, urn)
+  if not artist:
+    logger.error(f"Failed to get artist data for URN: {urn}")
+    continue
+    
   print(row[TBL_NAME]," - ",artist['name'],",",row[TBL_ALBUM_TYPE],",",row[TBL_RELEASE_DATE],row[TBL_URL])
   idx = idx + 1
 
@@ -85,6 +99,9 @@ for row in cur.execute('SELECT * FROM tracks ORDER BY name'):
   f.write(",")
   f.write(row[TBL_RELEASE_DATE])
   f.write('</td></tr>\n')
+
+  # Add rate limiting delay between requests
+  rate_limit_delay()
 
 f.write('</table></p>\n')
 

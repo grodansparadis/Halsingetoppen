@@ -2,7 +2,18 @@ from datetime import date
 import time
 import spotipy
 import sqlite3
+import logging
 from spotipy.oauth2 import SpotifyClientCredentials
+
+# Import our Spotify utilities
+from spotify_utils import (
+    safe_spotify_artist,
+    rate_limit_delay
+)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 TBL_ID = 0
 TBL_LINK_AREA = 1
@@ -54,10 +65,11 @@ cur_write = con.cursor()
 for row in cur.execute('SELECT * FROM artists ORDER BY id'):
   #print(row[TBL_ID])
   urn = row[TBL_ID]
-  try:
-     artist = sp.artist(urn)
-  except:
-     print("* * * * * * * ------> URN:[",urn,"] Not found")
+  
+  # Use safe Spotify call with retry handling
+  artist = safe_spotify_artist(sp, urn)
+  if not artist:
+     logger.error(f"Failed to get artist data for URN: {urn}")
      continue
   #print(artist)
   print("Name: ",artist['name'])
@@ -166,12 +178,11 @@ for row in cur.execute('SELECT * FROM artists ORDER BY popularity DESC'):
   if row[TBL_BINACTIVATE] != 0:
     continue
 
-  try:
-    artist = sp.artist(urn)
-  except:
-    print("***** Exception ******* Artist:", row[TBL_NAME])
-    print(" ------>",urn,"Not found")
-    #artist = sp.artist(urn)
+  # Use safe Spotify call with retry handling
+  artist = safe_spotify_artist(sp, urn)
+  if not artist:
+    logger.error(f"Failed to get artist data for {row[TBL_NAME]} (URN: {urn})")
+    continue
   
   print(str(cnt) + ". " + str(artist['popularity']) + " " + artist['name'] + " (" + str(artist['followers']['total']) + ")")
 
@@ -192,7 +203,9 @@ for row in cur.execute('SELECT * FROM artists ORDER BY popularity DESC'):
   f.write('</td></tr>\n')
 
   cnt = cnt + 1
-  #time.sleep(2)
+  
+  # Add rate limiting delay between requests
+  rate_limit_delay()
 
 f.write('</table></p>\n')
 
