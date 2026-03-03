@@ -42,6 +42,26 @@
                         <label for="name" class="form-label">Artistnamn <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="name" name="name" required>
                     </div>
+
+                    <div class="mb-3">
+                        <label for="apple_music_link" class="form-label">Apple Music-länk</label>
+                        <input type="url" class="form-control" id="apple_music_link" name="apple_music_link"
+                               placeholder="https://music.apple.com/...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="youtube_music_link" class="form-label">YouTube Music-länk</label>
+                        <input type="url" class="form-control" id="youtube_music_link" name="youtube_music_link"
+                               placeholder="https://music.youtube.com/...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="markdown_info" class="form-label">Artistinformation (Markdown)</label>
+                        <textarea class="form-control" id="markdown_info" name="markdown_info" rows="6"
+                                  placeholder="Skriv information om artisten i Markdown-format..."></textarea>
+                        <div class="form-text">Markdown stöds. Förhandsvisning visas nedan.</div>
+                        <div id="markdown_preview" class="border rounded p-2 mt-2 bg-light small"></div>
+                    </div>
                     
                     <div class="text-end">
                         <a href="{{ url_for('artists') }}" class="btn btn-secondary me-2">Avbryt</a>
@@ -91,7 +111,29 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+function initMarkdownPreview() {
+    const input = document.getElementById('markdown_info');
+    const preview = document.getElementById('markdown_preview');
+
+    if (!input || !preview) {
+        return;
+    }
+
+    function renderMarkdownPreview() {
+        const markdownText = input.value || '';
+        if (window.marked && typeof window.marked.parse === 'function') {
+            preview.innerHTML = window.marked.parse(markdownText || '_Ingen text ännu_');
+        } else {
+            preview.textContent = markdownText || 'Ingen text ännu';
+        }
+    }
+
+    input.addEventListener('input', renderMarkdownPreview);
+    renderMarkdownPreview();
+}
+
 function searchSpotify() {
     const url = document.getElementById('spotify_url').value.trim();
     if (!url) return;
@@ -174,5 +216,7 @@ document.getElementById('spotify_search').addEventListener('keypress', function(
         performSpotifySearch();
     }
 });
+
+document.addEventListener('DOMContentLoaded', initMarkdownPreview);
 </script>
 {% endblock %}

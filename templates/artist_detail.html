@@ -41,6 +41,16 @@
                         <i class="fab fa-spotify me-1"></i>Öppna på Spotify
                     </a>
                 {% endif %}
+                {% if artist.apple_music_link %}
+                    <a href="{{ artist.apple_music_link }}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2">
+                        <i class="fas fa-music me-1"></i>Öppna i Apple Music
+                    </a>
+                {% endif %}
+                {% if artist.youtube_music_link %}
+                    <a href="{{ artist.youtube_music_link }}" target="_blank" class="btn btn-sm btn-outline-danger ms-2">
+                        <i class="fab fa-youtube me-1"></i>Öppna i YouTube Music
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -95,6 +105,20 @@
                         </td>
                     </tr>
                 </table>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-file-alt me-2"></i>Om artisten</h5>
+            </div>
+            <div class="card-body">
+                {% if artist.markdown_info %}
+                    <div id="artistMarkdownContent" class="small"></div>
+                    <textarea id="artistMarkdownSource" hidden>{{ artist.markdown_info }}</textarea>
+                {% else %}
+                    <p class="text-muted small mb-0">Ingen artistinformation tillagd ännu.</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -214,6 +238,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 function confirmDelete() {
     new bootstrap.Modal(document.getElementById('deleteArtistModal')).show();
@@ -224,5 +249,21 @@ function confirmDeleteTrack(trackId, trackName) {
     document.getElementById('deleteTrackForm').action = '/track/' + trackId + '/delete';
     new bootstrap.Modal(document.getElementById('deleteTrackModal')).show();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const source = document.getElementById('artistMarkdownSource');
+    const target = document.getElementById('artistMarkdownContent');
+
+    if (!source || !target) {
+        return;
+    }
+
+    const markdownText = source.value || '';
+    if (window.marked && typeof window.marked.parse === 'function') {
+        target.innerHTML = window.marked.parse(markdownText);
+    } else {
+        target.textContent = markdownText;
+    }
+});
 </script>
 {% endblock %}

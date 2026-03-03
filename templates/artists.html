@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Artister - Hälsingetoppen Admin{% endblock %}
+{% block title %}Hälsingeartister - Hälsingetoppen Admin{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1><i class="fas fa-users me-2"></i>Artister</h1>
-                <p class="text-muted">Hantera artister i databasen</p>
+                <h1><i class="fas fa-users me-2"></i>Hälsingeartister</h1>
+                <p class="text-muted">Ett urval av artister</p>
             </div>
             <a href="{{ url_for('add_artist') }}" class="btn btn-success">
                 <i class="fas fa-user-plus me-2"></i>Lägg till artist
@@ -99,6 +99,16 @@
                                         <i class="fab fa-spotify me-1"></i>Spotify
                                     </a>
                                 {% endif %}
+                                {% if artist.apple_music_link %}
+                                    <a href="{{ artist.apple_music_link }}" target="_blank" class="btn btn-sm btn-outline-secondary text-decoration-none ms-1">
+                                        <i class="fas fa-music me-1"></i>Apple Music
+                                    </a>
+                                {% endif %}
+                                {% if artist.youtube_music_link %}
+                                    <a href="{{ artist.youtube_music_link }}" target="_blank" class="btn btn-sm btn-outline-danger text-decoration-none ms-1">
+                                        <i class="fab fa-youtube me-1"></i>YouTube Music
+                                    </a>
+                                {% endif %}
                             </td>
                             <td>
                                 <span class="badge bg-{{ 'success' if artist.popularity > 50 else 'warning' if artist.popularity > 20 else 'secondary' }}">
@@ -115,17 +125,26 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-info" title="Visa artistinfo"
+                                                data-row-index="{{ loop.index }}"
+                                            data-artist-name="{{ artist.name|e }}"
+                                                data-action="show-artist-info">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
                                     <a href="{{ url_for('artist_detail', artist_id=artist.id) }}" class="btn btn-outline-primary" title="Visa detaljer">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a href="{{ url_for('edit_artist', artist_id=artist.id) }}" class="btn btn-outline-secondary" title="Redigera">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <button type="button" class="btn btn-outline-danger" title="Ta bort" 
-                                            onclick="confirmDelete('{{ artist.id }}', '{{ artist.name }}')">
+                                    <button type="button" class="btn btn-outline-danger" title="Ta bort"
+                                            data-action="confirm-delete"
+                                            data-artist-id="{{ artist.id }}"
+                                            data-artist-name="{{ artist.name|e }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
+                                <textarea id="artistMarkdownSource{{ loop.index }}" hidden>{{ artist.markdown_info or '' }}</textarea>
                             </td>
                         </tr>
                         {% endfor %}
@@ -174,14 +193,63 @@
         </div>
     </div>
 </div>
+
+<!-- Artist info modal -->
+<div class="modal fade" id="artistInfoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="artistInfoTitle">Artistinformation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="artistInfoContent" class="small"></div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 function confirmDelete(artistId, artistName) {
     document.getElementById('deleteArtistName').textContent = artistName;
     document.getElementById('deleteForm').action = '/artist/' + artistId + '/delete';
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
+
+function showArtistInfo(rowIndex, artistName) {
+    const source = document.getElementById('artistMarkdownSource' + rowIndex);
+    const target = document.getElementById('artistInfoContent');
+    const title = document.getElementById('artistInfoTitle');
+
+    title.textContent = 'Artistinformation: ' + artistName;
+
+    const markdownText = (source && source.value ? source.value : '').trim();
+    if (!markdownText) {
+        target.innerHTML = '<p class="text-muted mb-0">Ingen artistinformation tillagd ännu.</p>';
+    } else if (window.marked && typeof window.marked.parse === 'function') {
+        target.innerHTML = window.marked.parse(markdownText);
+    } else {
+        target.textContent = markdownText;
+    }
+
+    new bootstrap.Modal(document.getElementById('artistInfoModal')).show();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-action="show-artist-info"]').forEach(function(button) {
+        button.addEventListener('click', function() {
+            showArtistInfo(button.dataset.rowIndex, button.dataset.artistName);
+        });
+    });
+
+    document.querySelectorAll('[data-action="confirm-delete"]').forEach(function(button) {
+        button.addEventListener('click', function() {
+            confirmDelete(button.dataset.artistId, button.dataset.artistName);
+        });
+    });
+});
 </script>
 {% endblock %}

@@ -10,6 +10,8 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.exceptions import SpotifyException
 from datetime import datetime, date
+from email.message import EmailMessage
+import smtplib
 import os
 import time
 import logging
@@ -50,6 +52,57 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+
+def send_artist_tip_email(
+    artist_name,
+    sender_name,
+    sender_email,
+    info_text,
+    source_url=None,
+    spotify_link=None,
+    apple_music_link=None,
+    youtube_music_link=None,
+    halsingland_connection=None,
+):
+    """Send artist tip information to configured inbox via SMTP."""
+    recipient = os.getenv('TOPPEN_TIP_RECIPIENT', 'toppen@grodansparadis.com')
+    from_address = os.getenv('TOPPEN_SMTP_FROM', sender_email or 'no-reply@grodansparadis.com')
+    smtp_host = os.getenv('TOPPEN_SMTP_HOST', 'localhost')
+    smtp_port = int(os.getenv('TOPPEN_SMTP_PORT', '25'))
+    smtp_user = os.getenv('TOPPEN_SMTP_USER', '')
+    smtp_password = os.getenv('TOPPEN_SMTP_PASSWORD', '')
+    smtp_starttls = os.getenv('TOPPEN_SMTP_STARTTLS', 'false').lower() == 'true'
+    smtp_ssl = os.getenv('TOPPEN_SMTP_SSL', 'false').lower() == 'true'
+
+    message = EmailMessage()
+    message['Subject'] = f"Artisttips: {artist_name}"
+    message['From'] = from_address
+    message['To'] = recipient
+    message['Reply-To'] = sender_email
+    message.set_content(
+        "\n".join([
+            f"Artist: {artist_name}",
+            f"Namn: {sender_name}",
+            f"E-post: {sender_email}",
+            f"Källa: {source_url or 'okänd'}",
+            f"Spotify-länk: {spotify_link or '-'}",
+            f"Apple Music-länk: {apple_music_link or '-'}",
+            f"YouTube Music-länk: {youtube_music_link or '-'}",
+            f"Koppling till Hälsingland: {halsingland_connection or '-'}",
+            "",
+            "Information:",
+            info_text,
+        ])
+    )
+
+    smtp_class = smtplib.SMTP_SSL if smtp_ssl else smtplib.SMTP
+    with smtp_class(smtp_host, smtp_port, timeout=20) as smtp:
+        if not smtp_ssl and smtp_starttls:
+            smtp.starttls()
+        if smtp_user:
+            smtp.login(smtp_user, smtp_password)
+        smtp.send_message(message)
+
 def init_database():
     """Initialize database tables if they don't exist"""
     conn = get_db_connection()
@@ -69,6 +122,17 @@ def init_database():
             "notes" INTEGER
         )
     ''')
+
+    # Ensure artists table has added_at column for tracking when artists were added
+    artist_columns = [row[1] for row in conn.execute('PRAGMA table_info(artists)').fetchall()]
+    if 'added_at' not in artist_columns:
+        conn.execute('ALTER TABLE artists ADD COLUMN added_at TEXT')
+    if 'markdown_info' not in artist_columns:
+        conn.execute('ALTER TABLE artists ADD COLUMN markdown_info TEXT')
+    if 'apple_music_link' not in artist_columns:
+        conn.execute('ALTER TABLE artists ADD COLUMN apple_music_link TEXT')
+    if 'youtube_music_link' not in artist_columns:
+        conn.execute('ALTER TABLE artists ADD COLUMN youtube_music_link TEXT')
     
     # Create tracks table
     conn.execute('''
@@ -185,6 +249,9 @@ def add_artist():
     if request.method == 'POST':
         spotify_url = request.form.get('spotify_url', '').strip()
         name = request.form.get('name', '').strip()
+        markdown_info = request.form.get('markdown_info', '').strip()
+        apple_music_link = request.form.get('apple_music_link', '').strip()
+        youtube_music_link = request.form.get('youtube_music_link', '').strip()
         
         if not name:
             flash('Artist name is required', 'error')
@@ -224,8 +291,8 @@ def add_artist():
         try:
             conn = get_db_connection()
             conn.execute('''
-                INSERT INTO artists (id, name, popularity, followers, link, picture_small, bInactivate)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO artists (id, name, popularity, followers, link, picture_small, bInactivate, added_at, markdown_info, apple_music_link, youtube_music_link)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', [
                 artist_id,
                 name,
@@ -233,7 +300,11 @@ def add_artist():
                 spotify_data.get('followers', 0),
                 spotify_data.get('link', spotify_url),
                 spotify_data.get('picture_small', ''),
-                0
+                0,
+                datetime.now().strftime('%Y-%m-%d'),
+                markdown_info,
+                apple_music_link,
+                youtube_music_link,
             ])
             conn.commit()
             conn.close()
@@ -262,8 +333,15 @@ def edit_artist(artist_id):
         name = request.form.get('name', '').strip()
         popularity = int(request.form.get('popularity', 0) or 0)
         followers = int(request.form.get('followers', 0) or 0)
+        link_to_area_raw = request.form.get('link_to_area', '').strip()
+        link_to_area = int(link_to_area_raw) if link_to_area_raw else None
         link = request.form.get('link', '').strip()
+        apple_music_link = request.form.get('apple_music_link', '').strip()
+        youtube_music_link = request.form.get('youtube_music_link', '').strip()
         picture_small = request.form.get('picture_small', '').strip()
+        picture_large = request.form.get('picture_large', '').strip()
+        added_at = request.form.get('added_at', '').strip()
+        markdown_info = request.form.get('markdown_info', '').strip()
         inactive = 1 if request.form.get('inactive') else 0
         
         if not name:
@@ -273,10 +351,24 @@ def edit_artist(artist_id):
         try:
             conn.execute('''
                 UPDATE artists 
-                SET name = ?, popularity = ?, followers = ?, link = ?, 
-                    picture_small = ?, bInactivate = ?
+                SET name = ?, popularity = ?, followers = ?, link_to_area = ?, link = ?, 
+                    apple_music_link = ?, youtube_music_link = ?, picture_small = ?, picture_large = ?, added_at = ?, markdown_info = ?, bInactivate = ?
                 WHERE id = ?
-            ''', [name, popularity, followers, link, picture_small, inactive, artist_id])
+            ''', [
+                name,
+                popularity,
+                followers,
+                link_to_area,
+                link,
+                apple_music_link,
+                youtube_music_link,
+                picture_small,
+                picture_large,
+                added_at,
+                markdown_info,
+                inactive,
+                artist_id,
+            ])
             conn.commit()
             
             flash(f'Artist "{name}" updated successfully!', 'success')
@@ -460,6 +552,53 @@ def search_spotify():
         })
     
     return jsonify({'results': artists})
+
+
+@app.route('/api/artist-tip', methods=['POST'])
+def submit_artist_tip():
+    """Accept artist tip form submissions and send them via email."""
+    artist_name = (request.form.get('artist') or '').strip()
+    sender_name = (request.form.get('namn') or '').strip()
+    sender_email = (request.form.get('epost') or '').strip()
+    info_text = (request.form.get('information') or '').strip()
+    source_url = (request.form.get('source_url') or '').strip()
+    spotify_link = (request.form.get('spotify_link') or '').strip()
+    apple_music_link = (request.form.get('apple_music_link') or '').strip()
+    youtube_music_link = (request.form.get('youtube_music_link') or '').strip()
+    halsingland_connection = (request.form.get('halsingland_connection') or '').strip()
+
+    if not artist_name or not sender_name or not sender_email or not info_text:
+        return (
+            "<h2>Kunde inte skicka</h2><p>Alla fält måste fyllas i.</p>",
+            400,
+            {'Content-Type': 'text/html; charset=utf-8'}
+        )
+
+    try:
+        send_artist_tip_email(
+            artist_name=artist_name,
+            sender_name=sender_name,
+            sender_email=sender_email,
+            info_text=info_text,
+            source_url=source_url,
+            spotify_link=spotify_link,
+            apple_music_link=apple_music_link,
+            youtube_music_link=youtube_music_link,
+            halsingland_connection=halsingland_connection,
+        )
+    except Exception as e:
+        logger.exception("Failed to send artist tip email")
+        return (
+            "<h2>Kunde inte skicka</h2><p>Ett serverfel uppstod. Försök igen senare.</p>",
+            500,
+            {'Content-Type': 'text/html; charset=utf-8'}
+        )
+
+    return (
+        "<h2>Tack!</h2><p>Ditt tips har skickats till toppen@grodansparadis.com.</p>",
+        200,
+        {'Content-Type': 'text/html; charset=utf-8'}
+    )
 
 @app.route('/generate')
 def generate_menu():

@@ -50,6 +50,7 @@ The "Generate All Lists" functionality provides a streamlined way to generate bo
 
 **Options**:
 - `--update-spotify, -u`: Update artist data from Spotify first
+- `--include-random-artist-list, -r`: Also generate a randomized artist list HTML
 - `--verbose, -v`: Enable detailed logging
 - `--help, -h`: Show help message
 
@@ -61,8 +62,14 @@ python generate_all_cli.py
 # Full generation with Spotify update (5-15 minutes)
 python generate_all_cli.py --update-spotify
 
+# Generate toplist + songs + randomized artist list
+python generate_all_cli.py --include-random-artist-list
+
 # Verbose output for debugging
 python generate_all_cli.py --update-spotify --verbose
+
+# Full generation including random artist list with verbose output
+python generate_all_cli.py --update-spotify --include-random-artist-list --verbose
 ```
 
 **Features**:
@@ -77,6 +84,7 @@ python generate_all_cli.py --update-spotify --verbose
 
 **Options**:
 - `-u, --update-spotify`: Update artist data from Spotify first
+- `-r, --include-random-artist-list`: Also generate randomized artist list HTML
 - `-v, --verbose`: Enable verbose output
 - `-h, --help`: Show help message
 
@@ -88,8 +96,14 @@ python generate_all_cli.py --update-spotify --verbose
 # Full generation with confirmation prompt
 ./generate_all.sh -u
 
+# Include randomized artist list
+./generate_all.sh -r
+
 # Full generation with verbose output
 ./generate_all.sh -u -v
+
+# Full generation including random artist list
+./generate_all.sh -u -r -v
 ```
 
 **Features**:
@@ -122,15 +136,22 @@ If enabled, the system will:
 - Creates mobile-responsive design
 - **Time**: 30-60 seconds
 
+### Step 4: Generate Randomized Artist List (Optional)
+- Creates `artistlista_random.html`
+- Lists active artists in a new random order on every run
+- Includes Spotify artist link and Spotify artist image
+- Excludes Spotify followers and popularity in the output
+- **Time**: 1-5 seconds
+
 ## Performance & Timing
 
 ### Without Spotify Update
-- **Total Time**: 30 seconds - 2 minutes
+- **Total Time**: 30 seconds - 2 minutes (typically +1-5 seconds if random artist list is enabled)
 - **Best For**: Quick updates, testing, regular regeneration
 - **Use Case**: When artist data is already current
 
 ### With Spotify Update
-- **Total Time**: 5-15 minutes
+- **Total Time**: 5-15 minutes (typically +1-5 seconds if random artist list is enabled)
 - **Best For**: Weekly updates, fresh data requirements
 - **Use Case**: When you need the latest popularity and follower data
 
@@ -278,6 +299,7 @@ ls -la toppen.sqlite3
 ### Generated Files
 - **topplista.html**: Complete artist ranking with mobile design
 - **songs.html**: All top tracks list with artist information
+- **artistlista_random.html**: Randomized hälsingeartister list with Spotify links and images (CLI option `-r/--include-random-artist-list`)
 - **generate_all.log**: Detailed operation log (CLI only)
 
 ### File Locations
@@ -291,6 +313,33 @@ ls -la toppen.sqlite3
 - Store Spotify credentials securely
 - Use environment variables for production
 - Rotate API keys regularly
+
+### SMTP for Artist Tips
+The artist tip form (`/api/artist-tip`) sends email through SMTP from `web_admin.py`.
+
+**Environment variables**:
+- `TOPPEN_SMTP_HOST`: SMTP server hostname (default: `localhost`)
+- `TOPPEN_SMTP_PORT`: SMTP port (default: `25`)
+- `TOPPEN_SMTP_USER`: SMTP username (optional)
+- `TOPPEN_SMTP_PASSWORD`: SMTP password (optional)
+- `TOPPEN_SMTP_STARTTLS`: `true`/`false` (default: `false`)
+- `TOPPEN_SMTP_SSL`: `true`/`false` (default: `false`)
+- `TOPPEN_SMTP_FROM`: Sender address used in outgoing email
+- `TOPPEN_TIP_RECIPIENT`: Recipient inbox (default: `toppen@grodansparadis.com`)
+
+**Example setup**:
+```bash
+export TOPPEN_SMTP_HOST="smtp.example.com"
+export TOPPEN_SMTP_PORT="587"
+export TOPPEN_SMTP_USER="smtp-user"
+export TOPPEN_SMTP_PASSWORD="smtp-password"
+export TOPPEN_SMTP_STARTTLS="true"
+export TOPPEN_SMTP_SSL="false"
+export TOPPEN_SMTP_FROM="toppen@grodansparadis.com"
+export TOPPEN_TIP_RECIPIENT="toppen@grodansparadis.com"
+```
+
+Restart the web app after changing environment variables.
 
 ### File Permissions
 - Ensure write permissions for output directory

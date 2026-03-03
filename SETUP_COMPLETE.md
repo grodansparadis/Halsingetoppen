@@ -48,7 +48,7 @@ Jag har skapat ett komplett webbaserat administrationsinterface för Hälsingeto
 ### HTML-mallar (templates/)
 - `base.html` - Basmall med navigation och styling
 - `dashboard.html` - Huvuddashboard
-- `artists.html` - Artistlista med sök/filter
+- `artists.html` - Hälsingeartister med sök/filter
 - `artist_detail.html` - Detaljvy för artist
 - `add_artist.html` - Lägg till ny artist (med Spotify-sökning)
 - `edit_artist.html` - Redigera artist

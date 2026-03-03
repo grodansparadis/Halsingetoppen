@@ -157,6 +157,34 @@ export SPOTIPY_CLIENT_SECRET="ditt_client_secret"
 - Validering av Spotify-ID:n
 - Direktlänkar till Spotify
 
+## SMTP för artisttips
+
+Hälsingeartisterna med slumpad ordning kan visa ett formulär per artist som skickar tips till backend-endpointen `POST /api/artist-tip`.
+
+### Miljövariabler
+- `TOPPEN_SMTP_HOST` (default: `localhost`)
+- `TOPPEN_SMTP_PORT` (default: `25`)
+- `TOPPEN_SMTP_USER` (valfri)
+- `TOPPEN_SMTP_PASSWORD` (valfri)
+- `TOPPEN_SMTP_STARTTLS` (`true`/`false`, default: `false`)
+- `TOPPEN_SMTP_SSL` (`true`/`false`, default: `false`)
+- `TOPPEN_SMTP_FROM` (avsändaradress)
+- `TOPPEN_TIP_RECIPIENT` (default: `toppen@grodansparadis.com`)
+
+### Exempel
+```bash
+export TOPPEN_SMTP_HOST="smtp.example.com"
+export TOPPEN_SMTP_PORT="587"
+export TOPPEN_SMTP_USER="smtp-user"
+export TOPPEN_SMTP_PASSWORD="smtp-password"
+export TOPPEN_SMTP_STARTTLS="true"
+export TOPPEN_SMTP_SSL="false"
+export TOPPEN_SMTP_FROM="toppen@grodansparadis.com"
+export TOPPEN_TIP_RECIPIENT="toppen@grodansparadis.com"
+```
+
+Starta om webappen efter att variablerna har ändrats.
+
 ## Säkerhet
 
 ⚠️ **Viktigt**: Detta är ett utvecklingsverktyg för lokalt bruk.
@@ -185,7 +213,7 @@ För produktionsmiljö:
 ├── templates/                # HTML-mallar
 │   ├── base.html            # Basmall
 │   ├── dashboard.html       # Dashboard
-│   ├── artists.html         # Artistlista
+│   ├── artists.html         # Hälsingeartister
 │   ├── artist_detail.html   # Artistdetaljer
 │   ├── add_artist.html      # Lägg till artist
 │   ├── edit_artist.html     # Redigera artist
@@ -208,6 +236,7 @@ För produktionsmiljö:
 - `GET/POST /track/<id>/edit`: Redigera låt
 - `POST /track/<id>/delete`: Ta bort låt
 - `GET /api/search_spotify`: Sök Spotify
+- `POST /api/artist-tip`: Ta emot artisttips och skicka via SMTP
 - `GET /generate`: Genereringsmeny
 - `GET/POST /generate/toplist`: Generera HTML-topplista
 - `POST /generate/songs`: Generera HTML-låtlista

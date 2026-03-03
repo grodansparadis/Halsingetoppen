@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import our utilities and web_admin functions
 from spotify_utils import rate_limit_delay
+from generate_random_artist_list import generate_random_artist_list
 from web_admin import (
     get_db_connection, generate_html_toplist, generate_html_songs,
     safe_spotify_artist, sp, logger
@@ -100,12 +101,13 @@ def update_artists_from_spotify():
     logger.info(f"Artist update completed: {update_count} updated, {error_count} errors")
     return update_count, error_count
 
-def generate_all_lists(update_spotify=False, verbose=False):
+def generate_all_lists(update_spotify=False, include_random_artist_list=False, verbose=False):
     """
     Generate all lists (toplist and songs) in one run
     
     Args:
         update_spotify (bool): Whether to update artist data from Spotify first
+        include_random_artist_list (bool): Whether to generate randomized artist list HTML
         verbose (bool): Enable verbose logging
         
     Returns:
@@ -118,11 +120,13 @@ def generate_all_lists(update_spotify=False, verbose=False):
     logger.info("Starting batch generation of all lists")
     logger.info(f"Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"Update from Spotify: {'Yes' if update_spotify else 'No'}")
+    logger.info(f"Include random artist list: {'Yes' if include_random_artist_list else 'No'}")
     logger.info("="*60)
     
     results = {
         'toplist_file': None,
         'songs_file': None,
+        'random_artist_file': None,
         'update_count': 0,
         'error_count': 0,
         'errors': [],
@@ -134,7 +138,7 @@ def generate_all_lists(update_spotify=False, verbose=False):
     try:
         # Step 1: Update artist data from Spotify if requested
         if update_spotify:
-            logger.info("Step 1/3: Updating artist data from Spotify...")
+            logger.info("Step 1/4: Updating artist data from Spotify...")
             update_count, error_count = update_artists_from_spotify()
             results['update_count'] = update_count
             results['error_count'] += error_count
@@ -142,10 +146,10 @@ def generate_all_lists(update_spotify=False, verbose=False):
             if error_count > 0:
                 results['errors'].append(f"Failed to update {error_count} artists from Spotify")
         else:
-            logger.info("Step 1/3: Skipping Spotify update (not requested)")
+            logger.info("Step 1/4: Skipping Spotify update (not requested)")
         
         # Step 2: Generate HTML toplist
-        logger.info("Step 2/3: Generating HTML toplist...")
+        logger.info("Step 2/4: Generating HTML toplist...")
         try:
             results['toplist_file'] = generate_html_toplist()
             logger.info(f"✅ Toplist generated: {results['toplist_file']}")
@@ -156,7 +160,7 @@ def generate_all_lists(update_spotify=False, verbose=False):
             results['error_count'] += 1
         
         # Step 3: Generate HTML songs list
-        logger.info("Step 3/3: Generating HTML songs list...")
+        logger.info("Step 3/4: Generating HTML songs list...")
         try:
             results['songs_file'] = generate_html_songs()
             logger.info(f"✅ Songs list generated: {results['songs_file']}")
@@ -165,6 +169,20 @@ def generate_all_lists(update_spotify=False, verbose=False):
             logger.error(f"❌ {error_msg}")
             results['errors'].append(error_msg)
             results['error_count'] += 1
+
+        # Step 4: Generate randomized artist list (optional)
+        if include_random_artist_list:
+            logger.info("Step 4/4: Generating randomized artist list...")
+            try:
+                results['random_artist_file'] = generate_random_artist_list()
+                logger.info(f"✅ Random artist list generated: {results['random_artist_file']}")
+            except Exception as e:
+                error_msg = f"Error generating random artist list: {str(e)}"
+                logger.error(f"❌ {error_msg}")
+                results['errors'].append(error_msg)
+                results['error_count'] += 1
+        else:
+            logger.info("Step 4/4: Skipping randomized artist list (not requested)")
         
         # Calculate completion stats
         results['end_time'] = datetime.now()
@@ -185,6 +203,12 @@ def generate_all_lists(update_spotify=False, verbose=False):
             logger.info(f"  ✅ Songs: {results['songs_file']}")
         else:
             logger.info(f"  ❌ Songs: Failed to generate")
+
+        if include_random_artist_list:
+            if results['random_artist_file']:
+                logger.info(f"  ✅ Random artists: {results['random_artist_file']}")
+            else:
+                logger.info(f"  ❌ Random artists: Failed to generate")
         
         if update_spotify:
             logger.info(f"Artists updated from Spotify: {results['update_count']}")
@@ -220,13 +244,15 @@ def main():
 Examples:
   python generate_all_cli.py                    # Generate lists without Spotify update
   python generate_all_cli.py --update-spotify  # Update from Spotify first, then generate
+    python generate_all_cli.py --include-random-artist-list  # Also generate randomized artist list
   python generate_all_cli.py -v                # Verbose output
-  python generate_all_cli.py --update-spotify -v  # Full update with verbose output
+    python generate_all_cli.py --update-spotify --include-random-artist-list -v  # Full update with verbose output
 
 This script will:
 1. Optionally update all artist data from Spotify (popularity, followers, images)
 2. Generate HTML toplist ranking artists by popularity
 3. Generate HTML songs list with all top tracks
+4. Optionally generate randomized artist list with Spotify links and images
 
 Generated files will be saved in the current directory.
 Progress and results are logged to both console and generate_all.log.
@@ -244,6 +270,12 @@ Progress and results are logged to both console and generate_all.log.
         action='store_true',
         help='Enable verbose output with detailed logging'
     )
+
+    parser.add_argument(
+        '--include-random-artist-list', '-r',
+        action='store_true',
+        help='Generate randomized artist list HTML (artistlista_random.html)'
+    )
     
     args = parser.parse_args()
     
@@ -257,6 +289,7 @@ Progress and results are logged to both console and generate_all.log.
     try:
         results = generate_all_lists(
             update_spotify=args.update_spotify,
+            include_random_artist_list=args.include_random_artist_list,
             verbose=args.verbose
         )
         

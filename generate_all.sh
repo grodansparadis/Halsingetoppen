@@ -29,6 +29,7 @@ fi
 
 # Default options
 UPDATE_SPOTIFY=false
+INCLUDE_RANDOM_ARTIST_LIST=false
 VERBOSE=false
 
 # Parse command line arguments
@@ -42,19 +43,26 @@ while [[ $# -gt 0 ]]; do
             VERBOSE=true
             shift
             ;;
+        -r|--include-random-artist-list)
+            INCLUDE_RANDOM_ARTIST_LIST=true
+            shift
+            ;;
         -h|--help)
             echo ""
             echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  -u, --update-spotify    Update artist data from Spotify first"
+            echo "  -r, --include-random-artist-list  Also generate randomized artist list HTML"
             echo "  -v, --verbose          Enable verbose output"
             echo "  -h, --help             Show this help message"
             echo ""
             echo "Examples:"
             echo "  $0                     # Quick generation without Spotify update"
             echo "  $0 -u                  # Full update with Spotify data"
+            echo "  $0 -r                  # Include randomized artist list"
             echo "  $0 -u -v               # Full update with verbose output"
+            echo "  $0 -u -r -v            # Full update + random artist list + verbose output"
             echo ""
             exit 0
             ;;
@@ -71,12 +79,16 @@ CMD="python generate_all_cli.py"
 if [ "$UPDATE_SPOTIFY" = true ]; then
     CMD="$CMD --update-spotify"
 fi
+if [ "$INCLUDE_RANDOM_ARTIST_LIST" = true ]; then
+    CMD="$CMD --include-random-artist-list"
+fi
 if [ "$VERBOSE" = true ]; then
     CMD="$CMD --verbose"
 fi
 
 echo "Configuration:"
 echo "  Update from Spotify: $([ "$UPDATE_SPOTIFY" = true ] && echo "Yes" || echo "No")"
+echo "  Include random artist list: $([ "$INCLUDE_RANDOM_ARTIST_LIST" = true ] && echo "Yes" || echo "No")"
 echo "  Verbose output: $([ "$VERBOSE" = true ] && echo "Yes" || echo "No")"
 echo ""
 
