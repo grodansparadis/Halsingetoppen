@@ -936,6 +936,12 @@ def generate_html_toplist():
     
     conn = get_db_connection()
     
+    # Check for optional columns
+    artist_columns = [row[1] for row in conn.execute("PRAGMA table_info(artists)").fetchall()]
+    has_apple_music_link = "apple_music_link" in artist_columns
+    has_youtube_music_link = "youtube_music_link" in artist_columns
+    has_markdown_info = "markdown_info" in artist_columns
+    
     with open(filename, 'w', encoding='utf-8') as f:
         f.write(f'''<!DOCTYPE html>
 <html lang="sv">
@@ -1138,6 +1144,68 @@ def generate_html_toplist():
 
         .btn-sort.active {{
             background: linear-gradient(135deg, #fd79a8, #e84393);
+        }}
+        
+        .info-btn {{
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }}
+        
+        .info-btn:hover {{
+            background: linear-gradient(135deg, #0984e3, #74b9ff);
+            transform: scale(1.1);
+        }}
+        
+        .artist-info-panel {{
+            display: none;
+            margin-top: 1rem;
+            border-top: 1px solid #e5e5e5;
+            padding-top: 1rem;
+        }}
+        
+        .artist-info-panel.open {{
+            display: block;
+        }}
+        
+        .artist-info-content {{
+            background: #f8f9fa;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            padding: 1rem;
+            color: #333;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }}
+        
+        .artist-info-content p {{
+            margin-bottom: 0.75rem;
+        }}
+        
+        .artist-info-content p:last-child {{
+            margin-bottom: 0;
+        }}
+        
+        .artist-info-content a {{
+            color: #667eea;
+        }}
+        
+        .music-links {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
         }}
 
         .footer-section {{
@@ -1379,6 +1447,36 @@ def generate_html_toplist():
                 spotify_url = row['link'] or '#'
                 image_url = row['picture_small'] or ''
             
+            # Get optional music links from database
+            apple_music_link = ""
+            youtube_music_link = ""
+            markdown_info = ""
+            if has_apple_music_link:
+                apple_music_link = (row['apple_music_link'] or "").strip()
+            if has_youtube_music_link:
+                youtube_music_link = (row['youtube_music_link'] or "").strip()
+            if has_markdown_info:
+                markdown_info = (row['markdown_info'] or "").strip()
+            
+            # Build music links HTML
+            music_links_html = f'<a href="{spotify_url}" target="_blank" class="btn btn-sm btn-success me-1"><i class="fab fa-spotify me-1"></i>Spotify</a>'
+            if apple_music_link:
+                music_links_html += f'<a href="{apple_music_link}" target="_blank" class="btn btn-sm btn-dark me-1"><i class="fab fa-apple me-1"></i>Apple Music</a>'
+            if youtube_music_link:
+                music_links_html += f'<a href="{youtube_music_link}" target="_blank" class="btn btn-sm btn-danger me-1"><i class="fab fa-youtube me-1"></i>YouTube</a>'
+            
+            # Add info button if there's markdown info
+            info_panel_id = f"artist-info-{cnt}"
+            info_button_html = f'<button type="button" class="info-btn toggle-artist-info" data-info-id="{info_panel_id}" title="Visa info om artisten"><i class="fas fa-info"></i></button>'
+            
+            # Escape markdown for safe HTML embedding
+            markdown_info_escaped = markdown_info.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+            info_panel_html = f'''
+                    <div id="{info_panel_id}" class="artist-info-panel">
+                        <div class="artist-info-content" data-rendered="false"></div>
+                        <textarea class="artist-markdown-source" hidden>{markdown_info_escaped or 'Ingen information tillgänglig ännu.'}</textarea>
+                    </div>''' if has_markdown_info else ''
+            
             f.write(f'''                <div class="artist-card" data-position="{cnt}" data-name="{name.lower()}" data-popularity="{popularity}" data-followers="{followers}">
                     <div class="d-flex align-items-center">
                         <div class="position-badge">
@@ -1387,11 +1485,12 @@ def generate_html_toplist():
                         <div class="p-3">
                             {f'<img src="{image_url}" alt="{name}" class="artist-image">' if image_url else f'<div class="artist-image bg-light d-flex align-items-center justify-content-center"><i class="fas fa-user fa-2x text-muted"></i></div>'}
                         </div>
-                        <div class="artist-info">
-                            <a href="{spotify_url}" target="_blank" class="artist-name">
-                                <i class="fab fa-spotify me-2"></i>{name}
-                            </a>
-                            <div class="stats-container">
+                        <div class="artist-info flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="artist-name">{name}</span>
+                                {info_button_html if has_markdown_info else ''}
+                            </div>
+                            <div class="stats-container mb-2">
                                 <div class="stat-item popularity-stat">
                                     <i class="fas fa-fire"></i>
                                     <span>{popularity}% popularitet</span>
@@ -1401,8 +1500,11 @@ def generate_html_toplist():
                                     <span>{followers:,} följare</span>
                                 </div>
                             </div>
+                            <div class="music-links">
+                                {music_links_html}
+                            </div>
                         </div>
-                    </div>
+                    </div>{info_panel_html}
                 </div>
 ''')
             cnt += 1
@@ -1420,6 +1522,7 @@ def generate_html_toplist():
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <script>
         // Application state
@@ -1431,6 +1534,7 @@ def generate_html_toplist():
         document.addEventListener('DOMContentLoaded', function() {{
             initializeArtists();
             setupEventListeners();
+            setupInfoButtons();
             hideLoading();
         }});
 
@@ -1451,6 +1555,29 @@ def generate_html_toplist():
                 popularity: parseInt(card.dataset.popularity),
                 followers: parseInt(card.dataset.followers)
             }}));
+        }}
+        
+        function setupInfoButtons() {{
+            document.querySelectorAll('.toggle-artist-info').forEach(function(button) {{
+                button.addEventListener('click', function() {{
+                    const panel = document.getElementById(button.dataset.infoId);
+                    if (!panel) return;
+
+                    const content = panel.querySelector('.artist-info-content');
+                    const source = panel.querySelector('.artist-markdown-source');
+                    if (content && source && content.dataset.rendered !== 'true') {{
+                        const markdownText = source.value || '';
+                        if (window.marked && typeof window.marked.parse === 'function') {{
+                            content.innerHTML = window.marked.parse(markdownText);
+                        }} else {{
+                            content.textContent = markdownText;
+                        }}
+                        content.dataset.rendered = 'true';
+                    }}
+
+                    panel.classList.toggle('open');
+                }});
+            }});
         }}
 
         function setupEventListeners() {{
