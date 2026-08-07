@@ -15,6 +15,8 @@ import smtplib
 import os
 import time
 import logging
+import json
+from threading import Thread
 
 # Import our Spotify utilities
 from spotify_utils import (
@@ -51,6 +53,70 @@ def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def sync_tracks_from_spotify():
+    """Fetch Spotify top tracks for all active artists and store them in the database."""
+    if not sp:
+        logger.error("Spotify client is not configured; cannot sync tracks")
+        return
+
+    conn = get_db_connection()
+    try:
+        conn.execute('DELETE FROM tracks')
+        conn.commit()
+
+        artist_rows = conn.execute(
+            'SELECT * FROM artists WHERE bInactivate = 0 OR bInactivate IS NULL ORDER BY name, id'
+        ).fetchall()
+
+        track_count = 0
+        error_count = 0
+
+        for row in artist_rows:
+            urn = row['id']
+
+            artist = safe_spotify_artist(sp, urn)
+            if not artist:
+                logger.error(f"Failed to get artist data for {urn}")
+                error_count += 1
+                continue
+
+            tracks = safe_spotify_artist_top_tracks(sp, urn)
+            if not tracks:
+                logger.error(f"Failed to get top tracks for {urn}")
+                error_count += 1
+                continue
+
+            for item in tracks.get('tracks', []):
+                song = item['name'].replace('"', "''")
+
+                conn.execute('''
+                    INSERT INTO tracks (id, artist_id, name, popularity, album_type, url, release_date)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', [
+                    item['id'],
+                    artist['id'],
+                    song,
+                    item['popularity'],
+                    item['album']['album_type'],
+                    item['external_urls']['spotify'],
+                    item['album']['release_date']
+                ])
+                track_count += 1
+
+            conn.commit()
+            rate_limit_delay()
+
+        logger.info(
+            "Synced %s tracks from Spotify with %s errors",
+            track_count,
+            error_count,
+        )
+    except Exception:
+        logger.exception("Error syncing tracks from Spotify")
+    finally:
+        conn.close()
 
 
 def send_artist_tip_email(
@@ -771,6 +837,7 @@ def generate_all():
             
             # Step 2: Generate HTML toplist
             logger.info("Generating HTML toplist...")
+            logger.info("Toplist uses DB-only mode (no Spotify API calls during static generation)")
             try:
                 results['toplist_file'] = generate_html_toplist()
                 logger.info(f"Toplist generated: {results['toplist_file']}")
@@ -842,67 +909,12 @@ def generate_all():
 def sync_tracks():
     """Sync tracks from Spotify (same as tracks.py)"""
     if request.method == 'POST':
-        update_playlist = request.form.get('update_playlist') == 'on'
-        
         try:
             if not sp:
                 flash('Spotify not configured', 'error')
                 return redirect(url_for('sync_tracks'))
-            
-            conn = get_db_connection()
-            cur = conn.cursor()
-            
-            # Clear existing tracks
-            conn.execute('DELETE FROM tracks')
-            conn.commit()
-            
-            track_count = 0
-            error_count = 0
-            
-            for row in cur.execute('SELECT * FROM artists ORDER BY name, id'):
-                urn = row['id']
-                
-                # Use safe Spotify calls with retry handling
-                artist = safe_spotify_artist(sp, urn)
-                if not artist:
-                    logger.error(f"Failed to get artist data for {urn}")
-                    error_count += 1
-                    continue
-                
-                tracks = safe_spotify_artist_top_tracks(sp, urn)
-                if not tracks:
-                    logger.error(f"Failed to get top tracks for {urn}")
-                    error_count += 1
-                    continue
-                
-                if len(tracks['tracks']) == 0:
-                    continue
-                
-                for item in tracks['tracks']:
-                    song = item['name'].replace('"', "''")
-                    
-                    conn.execute('''
-                        INSERT INTO tracks (id, artist_id, name, popularity, album_type, url, release_date)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                    ''', [
-                        item['id'],
-                        artist['id'], 
-                        song,
-                        item['popularity'],
-                        item['album']['album_type'],
-                        item['external_urls']['spotify'],
-                        item['album']['release_date']
-                    ])
-                    track_count += 1
-                
-                conn.commit()
-                
-                # Add small delay between requests to be respectful
-                rate_limit_delay()
-            
-            conn.close()
-            
-            flash(f'Synced {track_count} tracks from Spotify. {error_count} errors.', 'success')
+            Thread(target=sync_tracks_from_spotify, daemon=True).start()
+            flash('Synkronisering startade i bakgrunden. Du kan lämna sidan medan jobbet körs.', 'success')
             
         except Exception as e:
             flash(f'Error syncing tracks: {e}', 'error')
@@ -1038,6 +1050,25 @@ def generate_html_toplist():
             margin-bottom: 0.5rem;
             text-decoration: none;
         }}
+
+        .artist-name-trigger {{
+            appearance: none;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            text-align: left;
+            cursor: pointer;
+            color: #2c3e50;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+        }}
+
+        .artist-name-trigger:hover {{
+            color: #667eea;
+            text-decoration: underline;
+        }}
         
         .artist-name:hover {{
             color: #667eea;
@@ -1096,6 +1127,10 @@ def generate_html_toplist():
         .btn-sort {{
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
         }}
         
         .btn-sort:hover {{
@@ -1144,6 +1179,21 @@ def generate_html_toplist():
 
         .btn-sort.active {{
             background: linear-gradient(135deg, #fd79a8, #e84393);
+            box-shadow: 0 0 0 2px rgba(232, 67, 147, 0.25);
+        }}
+
+        .btn-sort.active::after {{
+            display: inline-block;
+            font-size: 1.2rem;
+            line-height: 1;
+        }}
+
+        .btn-sort.active[data-direction="asc"]::after {{
+            content: "↑";
+        }}
+
+        .btn-sort.active[data-direction="desc"]::after {{
+            content: "↓";
         }}
         
         .info-btn {{
@@ -1199,6 +1249,261 @@ def generate_html_toplist():
         
         .artist-info-content a {{
             color: #667eea;
+        }}
+
+        .artist-detail-modal {{
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background: rgba(15, 23, 42, 0.72);
+            padding: 1rem;
+            overflow-y: auto;
+        }}
+
+        .artist-detail-modal.open {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+
+        .artist-detail-shell {{
+            width: 100%;
+            max-width: 1100px;
+            max-height: calc(100vh - 2rem);
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }}
+
+        .artist-detail-hero {{
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }}
+
+        .artist-detail-hero-row {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }}
+
+        .artist-detail-hero-main {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }}
+
+        .artist-detail-hero-image, .artist-detail-hero-placeholder {{
+            width: 92px;
+            height: 92px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }}
+
+        .artist-detail-hero-placeholder {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }}
+
+        .artist-detail-title {{
+            margin: 0 0 0.4rem 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }}
+
+        .artist-detail-stats {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }}
+
+        .artist-stat-pill {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            border-radius: 999px;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }}
+
+        .artist-detail-close {{
+            border: 0;
+            background: rgba(255,255,255,0.18);
+            color: #fff;
+            border-radius: 999px;
+            width: 42px;
+            height: 42px;
+            font-size: 1.25rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }}
+
+        .artist-detail-close:hover {{
+            background: rgba(255,255,255,0.3);
+        }}
+
+        .artist-detail-body {{
+            flex: 1 1 auto;
+            padding: 1.5rem;
+            overflow-y: auto;
+            min-height: 0;
+        }}
+
+        .artist-detail-grid {{
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 1rem;
+        }}
+
+        .artist-detail-card {{
+            border: 1px solid #e9ecef;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }}
+
+        .artist-detail-card-header {{
+            padding: 0.9rem 1rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 800;
+            color: #2c3e50;
+        }}
+
+        .artist-detail-card-body {{
+            padding: 1rem;
+        }}
+
+        .artist-detail-row {{
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f3f5;
+        }}
+
+        .artist-detail-row:last-child {{
+            border-bottom: 0;
+            padding-bottom: 0;
+        }}
+
+        .artist-detail-label {{
+            font-weight: 700;
+            color: #495057;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }}
+
+        .artist-detail-markdown {{
+            background: #fafafa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            line-height: 1.55;
+            color: #333;
+            min-height: 120px;
+        }}
+
+        .artist-top-tracks {{
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f3f5;
+        }}
+
+        .artist-top-tracks-list {{
+            margin: 0.6rem 0 0;
+            padding-left: 1.25rem;
+        }}
+
+        .artist-top-tracks-list li {{
+            margin-bottom: 0.35rem;
+        }}
+
+        .artist-top-track-link {{
+            color: #0d6efd;
+            text-decoration: none;
+        }}
+
+        .artist-top-track-link:hover {{
+            text-decoration: underline;
+        }}
+
+        .artist-detail-links {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }}
+
+        .artist-detail-link {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 999px;
+            padding: 0.45rem 0.85rem;
+            text-decoration: none;
+            font-weight: 700;
+            border: 1px solid transparent;
+        }}
+
+        .artist-detail-link.spotify {{
+            background: #1db954;
+            color: #fff;
+        }}
+
+        .artist-detail-link.spotify:hover {{
+            background: #18a449;
+        }}
+
+        .artist-detail-link.apple {{
+            background: #111;
+            color: #fff;
+        }}
+
+        .artist-detail-link.youtube {{
+            background: #ff0000;
+            color: #fff;
+        }}
+
+        .artist-detail-link.youtube:hover {{
+            background: #d80000;
+        }}
+
+        .artist-detail-link.secondary {{
+            background: #f8f9fa;
+            color: #222;
+            border-color: #dee2e6;
+        }}
+
+        .artist-detail-link.secondary:hover {{
+            background: #eef2f6;
+        }}
+
+        @media (max-width: 768px) {{
+            .artist-detail-grid {{
+                grid-template-columns: 1fr;
+            }}
+            .artist-detail-title {{
+                font-size: 1.5rem;
+            }}
         }}
         
         .music-links {{
@@ -1422,62 +1727,56 @@ def generate_html_toplist():
         
         cnt = 1
         for row in conn.execute('SELECT * FROM artists WHERE bInactivate = 0 OR bInactivate IS NULL ORDER BY popularity DESC, followers DESC'):
-            if sp:
-                # Use safe Spotify call with retry handling
-                artist = safe_spotify_artist(sp, row['id'])
-                if artist:
-                    name = artist['name']
-                    popularity = artist['popularity']
-                    followers = artist['followers']['total']
-                    spotify_url = artist['external_urls']['spotify']
-                    image_url = artist['images'][0]['url'] if len(artist['images']) > 0 else ''
-                else:
-                    # Fallback to database data if Spotify call fails
-                    logger.warning(f"Using database data for artist {row['id']} due to Spotify API failure")
-                    name = row['name']
-                    popularity = row['popularity'] or 0
-                    followers = row['followers'] or 0
-                    spotify_url = row['link'] or '#'
-                    image_url = row['picture_small'] or ''
-            else:
-                # Use database data when Spotify is not available
-                name = row['name']
-                popularity = row['popularity'] or 0
-                followers = row['followers'] or 0
-                spotify_url = row['link'] or '#'
-                image_url = row['picture_small'] or ''
+            # Always use database values during static generation to avoid long Spotify rate-limit stalls.
+            name = row['name']
+            popularity = row['popularity'] or 0
+            followers = row['followers'] or 0
+            spotify_url = row['link'] or '#'
+            image_url = row['picture_small'] or ''
             
             # Get optional music links from database
             apple_music_link = ""
             youtube_music_link = ""
             markdown_info = ""
+            added_at = ""
             if has_apple_music_link:
                 apple_music_link = (row['apple_music_link'] or "").strip()
             if has_youtube_music_link:
                 youtube_music_link = (row['youtube_music_link'] or "").strip()
             if has_markdown_info:
                 markdown_info = (row['markdown_info'] or "").strip()
+            if 'added_at' in row.keys():
+                added_at = (row['added_at'] or "").strip()
+
+            top_tracks_rows = conn.execute('''
+                SELECT name, popularity, url
+                FROM tracks
+                WHERE artist_id = ?
+                ORDER BY popularity DESC, name COLLATE NOCASE ASC
+                LIMIT 5
+            ''', [row['id']]).fetchall()
+            top_tracks = [
+                {
+                    'name': track_row['name'] or 'Okänd låt',
+                    'popularity': track_row['popularity'] if track_row['popularity'] is not None else 0,
+                    'url': track_row['url'] or ''
+                }
+                for track_row in top_tracks_rows
+            ]
             
             # Build music links HTML
-            music_links_html = f'<a href="{spotify_url}" target="_blank" class="btn btn-sm btn-success me-1"><i class="fab fa-spotify me-1"></i>Spotify</a>'
+            music_links_html = f'<a href="{spotify_url}" target="_blank" class="btn btn-sm btn-success me-1 spotify-btn"><i class="fab fa-spotify me-1"></i>Spotify</a>'
             if apple_music_link:
-                music_links_html += f'<a href="{apple_music_link}" target="_blank" class="btn btn-sm btn-dark me-1"><i class="fab fa-apple me-1"></i>Apple Music</a>'
+                music_links_html += f'<a href="{apple_music_link}" target="_blank" class="btn btn-sm btn-dark me-1 apple-music-btn"><i class="fab fa-apple me-1"></i>Apple Music</a>'
             if youtube_music_link:
-                music_links_html += f'<a href="{youtube_music_link}" target="_blank" class="btn btn-sm btn-danger me-1"><i class="fab fa-youtube me-1"></i>YouTube</a>'
-            
-            # Add info button if there's markdown info
-            info_panel_id = f"artist-info-{cnt}"
-            info_button_html = f'<button type="button" class="info-btn toggle-artist-info" data-info-id="{info_panel_id}" title="Visa info om artisten"><i class="fas fa-info"></i></button>'
+                music_links_html += f'<a href="{youtube_music_link}" target="_blank" class="btn btn-sm btn-danger me-1 youtube-music-btn"><i class="fab fa-youtube me-1"></i>YouTube</a>'
             
             # Escape markdown for safe HTML embedding
             markdown_info_escaped = markdown_info.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-            info_panel_html = f'''
-                    <div id="{info_panel_id}" class="artist-info-panel">
-                        <div class="artist-info-content" data-rendered="false"></div>
-                        <textarea class="artist-markdown-source" hidden>{markdown_info_escaped or 'Ingen information tillgänglig ännu.'}</textarea>
-                    </div>''' if has_markdown_info else ''
+            top_tracks_json = json.dumps(top_tracks, ensure_ascii=False)
+            top_tracks_json_escaped = top_tracks_json.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
             
-            f.write(f'''                <div class="artist-card" data-position="{cnt}" data-name="{name.lower()}" data-popularity="{popularity}" data-followers="{followers}">
+            f.write(f'''                <div class="artist-card" id="artist-card-{cnt}" data-position="{cnt}" data-name="{name.lower()}" data-name-display="{name}" data-spotify-id="{row['id']}" data-popularity="{popularity}" data-followers="{followers}" data-added-at="{added_at if has_markdown_info else ''}" data-markdown-info="{markdown_info_escaped or 'Ingen information tillgänglig ännu.'}" data-top-tracks="{top_tracks_json_escaped}" data-spf-link="{spotify_url}">
                     <div class="d-flex align-items-center">
                         <div class="position-badge">
                             <span class="position-number">#{cnt}</span>
@@ -1487,8 +1786,8 @@ def generate_html_toplist():
                         </div>
                         <div class="artist-info flex-grow-1">
                             <div class="d-flex align-items-center mb-1">
-                                <span class="artist-name">{name}</span>
-                                {info_button_html if has_markdown_info else ''}
+                                <button type="button" class="artist-name-trigger toggle-artist-detail">{name}</button>
+                                <button type="button" class="info-btn toggle-artist-detail ms-2" aria-label="Visa artistinfo" title="Visa artistinfo"><i class="fas fa-info"></i></button>
                             </div>
                             <div class="stats-container mb-2">
                                 <div class="stat-item popularity-stat">
@@ -1504,14 +1803,48 @@ def generate_html_toplist():
                                 {music_links_html}
                             </div>
                         </div>
-                    </div>{info_panel_html}
+                    </div>
                 </div>
 ''')
             cnt += 1
         
-        f.write(f'''            </div>
+        f.write('''            </div>
 
-            <!-- Footer -->
+            <div id="artistDetailModal" class="artist-detail-modal" aria-hidden="true">
+                <div class="artist-detail-shell" role="dialog" aria-modal="true" aria-labelledby="artistDetailTitle">
+                    <div class="artist-detail-hero">
+                        <div class="artist-detail-hero-row">
+                            <div class="artist-detail-hero-main">
+                                <div id="artistDetailImageWrap" class="artist-detail-hero-placeholder"><i class="fas fa-user fa-2x" aria-hidden="true"></i></div>
+                                <div>
+                                    <h2 id="artistDetailTitle" class="artist-detail-title"></h2>
+                                    <div id="artistDetailStats" class="artist-detail-stats"></div>
+                                    <div id="artistDetailLinks" class="artist-detail-links"></div>
+                                </div>
+                            </div>
+                            <button type="button" class="artist-detail-close" id="artistDetailClose" aria-label="Stäng">&times;</button>
+                        </div>
+                    </div>
+                    <div class="artist-detail-body">
+                        <div class="artist-detail-grid">
+                            <section class="artist-detail-card">
+                                <div class="artist-detail-card-header">Artistinformation</div>
+                                <div class="artist-detail-card-body" id="artistDetailInfo"></div>
+                            </section>
+                            <section class="artist-detail-card">
+                                <div class="artist-detail-card-header">Om artisten</div>
+                                <div class="artist-detail-card-body">
+                                    <div id="artistDetailMarkdown" class="artist-detail-markdown"></div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+''')
+
+        f.write(f'''            <!-- Footer -->
             <div class="footer-section">
                 <p class="mb-2"><strong>Listan uppdateras varje fredag</strong></p>
                 <p class="mb-0">Listan sammanställd av <a href="https://www.akehedman.se/" target="_blank">Åke Hedman</a></p>
@@ -1529,6 +1862,18 @@ def generate_html_toplist():
         let currentSort = 'position';
         let sortDirection = 'asc';
         let artists = [];
+        const artistDetailModal = document.getElementById('artistDetailModal');
+        const artistDetailClose = document.getElementById('artistDetailClose');
+        const artistDetailTitle = document.getElementById('artistDetailTitle');
+        const artistDetailStats = document.getElementById('artistDetailStats');
+        const artistDetailLinks = document.getElementById('artistDetailLinks');
+        const artistDetailInfo = document.getElementById('artistDetailInfo');
+        const artistDetailMarkdown = document.getElementById('artistDetailMarkdown');
+        const artistDetailImageWrap = document.getElementById('artistDetailImageWrap');
+
+        if (artistDetailModal && artistDetailModal.parentElement !== document.body) {{
+            document.body.appendChild(artistDetailModal);
+        }}
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {{
@@ -1557,25 +1902,117 @@ def generate_html_toplist():
             }}));
         }}
         
+        function openArtistDetail(card) {{
+            if (!card || !artistDetailModal) return;
+
+            function escapeHtml(value) {{
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }}
+
+            const artistName = card.dataset.nameDisplay || card.dataset.name || 'Artistinformation';
+            const spotifyId = card.dataset.spotifyId || '';
+            const popularity = card.dataset.popularity || '';
+            const followers = card.dataset.followers || '';
+            const addedAt = card.dataset.addedAt || '';
+            const spotifyLink = card.dataset.spfLink || '';
+            const topTracksRaw = card.dataset.topTracks || '[]';
+            const image = card.querySelector('.artist-image');
+            const markdownText = card.dataset.markdownInfo || '';
+            let topTracks = [];
+
+            try {{
+                topTracks = JSON.parse(topTracksRaw);
+            }} catch (error) {{
+                topTracks = [];
+            }}
+
+            artistDetailTitle.textContent = artistName;
+
+            if (image && image.getAttribute('src')) {{
+                artistDetailImageWrap.innerHTML = '<img class="artist-detail-hero-image" src="' + image.getAttribute('src') + '" alt="' + artistName.replace(/"/g, '&quot;') + '">';
+            }} else {{
+                artistDetailImageWrap.innerHTML = '<div class="artist-detail-hero-placeholder"><i class="fas fa-user fa-2x" aria-hidden="true"></i></div>';
+            }}
+
+            artistDetailStats.innerHTML = ''
+                + '<span class="artist-stat-pill">Aktiv</span>'
+                + (popularity ? '<span class="artist-stat-pill"><i class="fas fa-fire" aria-hidden="true"></i>' + popularity + '% popularitet</span>' : '')
+                + (followers ? '<span class="artist-stat-pill"><i class="fas fa-users" aria-hidden="true"></i>' + followers + ' följare</span>' : '')
+                + (addedAt ? '<span class="artist-stat-pill"><i class="fas fa-calendar" aria-hidden="true"></i>' + addedAt + '</span>' : '');
+
+            const links = [];
+            const spotifyAnchor = card.querySelector('.spotify-btn');
+            const appleMusicAnchor = card.querySelector('.apple-music-btn');
+            const youtubeMusicAnchor = card.querySelector('.youtube-music-btn');
+            if (spotifyAnchor) {{
+                links.push('<a class="artist-detail-link spotify" href="' + spotifyAnchor.href + '" target="_blank" rel="noopener noreferrer"><i class="fab fa-spotify" aria-hidden="true"></i>Spotify</a>');
+            }}
+            if (appleMusicAnchor) {{
+                links.push('<a class="artist-detail-link apple" href="' + appleMusicAnchor.href + '" target="_blank" rel="noopener noreferrer"><i class="fas fa-music" aria-hidden="true"></i>Apple Music</a>');
+            }}
+            if (youtubeMusicAnchor) {{
+                links.push('<a class="artist-detail-link youtube" href="' + youtubeMusicAnchor.href + '" target="_blank" rel="noopener noreferrer"><i class="fab fa-youtube" aria-hidden="true"></i>YouTube Music</a>');
+            }}
+            artistDetailLinks.innerHTML = links.join('');
+
+            artistDetailInfo.innerHTML = ''
+                + '<div class="artist-detail-row"><span class="artist-detail-label"><i class="fas fa-fire" aria-hidden="true"></i>Popularitet</span><span>' + (popularity || 'Okänt') + '</span></div>'
+                + '<div class="artist-detail-row"><span class="artist-detail-label"><i class="fas fa-users" aria-hidden="true"></i>Följare</span><span>' + (followers || 'Okänt') + '</span></div>'
+                + '<div class="artist-detail-row"><span class="artist-detail-label"><i class="fas fa-link" aria-hidden="true"></i>Spotify-länk</span><span>' + (spotifyLink ? 'Ja' : 'Nej') + '</span></div>'
+                + '<div class="artist-detail-row"><span class="artist-detail-label"><i class="fas fa-calendar" aria-hidden="true"></i>Tillagd</span><span>' + (addedAt || 'Okänt') + '</span></div>';
+
+            const topTracksHtml = topTracks.length
+                ? '<div class="artist-top-tracks">'
+                    + '<div class="artist-detail-label"><i class="fas fa-music" aria-hidden="true"></i>Fem mest populära låtar</div>'
+                    + '<ol class="artist-top-tracks-list">'
+                    + topTracks.map(function(track) {{
+                        const trackName = escapeHtml(track && track.name ? track.name : 'Okänd låt');
+                        const trackPopularity = track && track.popularity !== undefined && track.popularity !== null ? track.popularity : 'Okänt';
+                        const trackUrl = track && track.url ? String(track.url) : '';
+                        const titlePart = trackUrl
+                            ? '<a class="artist-top-track-link" href="' + escapeHtml(trackUrl) + '" target="_blank" rel="noopener noreferrer">' + trackName + '</a>'
+                            : '<span>' + trackName + '</span>';
+                        return '<li>' + titlePart + ' <span class="text-muted">(' + trackPopularity + ')</span></li>';
+                    }}).join('')
+                    + '</ol>'
+                + '</div>'
+                : '<div class="artist-top-tracks"><div class="artist-detail-label"><i class="fas fa-music" aria-hidden="true"></i>Fem mest populära låtar</div><p class="text-muted mb-0 mt-2">Inga låtar hittades för artisten.</p></div>';
+
+            artistDetailInfo.innerHTML += topTracksHtml;
+
+            if (window.marked && typeof window.marked.parse === 'function') {{
+                artistDetailMarkdown.innerHTML = markdownText ? window.marked.parse(markdownText) : '<p class="text-muted mb-0">Ingen artistinformation tillagd ännu.</p>';
+            }} else {{
+                artistDetailMarkdown.textContent = markdownText || 'Ingen artistinformation tillagd ännu.';
+            }}
+
+            artistDetailModal.scrollTop = 0;
+            const artistDetailBody = artistDetailModal.querySelector('.artist-detail-body');
+            if (artistDetailBody) {{
+                artistDetailBody.scrollTop = 0;
+            }}
+
+            artistDetailModal.classList.add('open');
+            artistDetailModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }}
+
+        function closeArtistDetail() {{
+            if (!artistDetailModal) return;
+            artistDetailModal.classList.remove('open');
+            artistDetailModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }}
+
         function setupInfoButtons() {{
-            document.querySelectorAll('.toggle-artist-info').forEach(function(button) {{
+            document.querySelectorAll('.toggle-artist-detail').forEach(function(button) {{
                 button.addEventListener('click', function() {{
-                    const panel = document.getElementById(button.dataset.infoId);
-                    if (!panel) return;
-
-                    const content = panel.querySelector('.artist-info-content');
-                    const source = panel.querySelector('.artist-markdown-source');
-                    if (content && source && content.dataset.rendered !== 'true') {{
-                        const markdownText = source.value || '';
-                        if (window.marked && typeof window.marked.parse === 'function') {{
-                            content.innerHTML = window.marked.parse(markdownText);
-                        }} else {{
-                            content.textContent = markdownText;
-                        }}
-                        content.dataset.rendered = 'true';
-                    }}
-
-                    panel.classList.toggle('open');
+                    openArtistDetail(button.closest('.artist-card'));
                 }});
             }});
         }}
@@ -1589,6 +2026,20 @@ def generate_html_toplist():
             const sortButtons = document.querySelectorAll('[data-sort]');
             sortButtons.forEach(button => {{
                 button.addEventListener('click', handleSort);
+            }});
+
+            updateSortButtonsState(currentSort, sortDirection);
+        }}
+
+        function updateSortButtonsState(sortType, direction) {{
+            document.querySelectorAll('[data-sort]').forEach(btn => {{
+                const isActive = btn.dataset.sort === sortType;
+                btn.classList.toggle('active', isActive);
+                if (isActive) {{
+                    btn.setAttribute('data-direction', direction);
+                }} else {{
+                    btn.removeAttribute('data-direction');
+                }}
             }});
         }}
 
@@ -1608,10 +2059,6 @@ def generate_html_toplist():
             
             const sortType = e.target.closest('[data-sort]').dataset.sort;
             
-            // Update active button
-            document.querySelectorAll('[data-sort]').forEach(btn => btn.classList.remove('active'));
-            e.target.closest('[data-sort]').classList.add('active');
-            
             // Toggle direction if same sort
             if (currentSort === sortType) {{
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -1620,6 +2067,7 @@ def generate_html_toplist():
             }}
             
             currentSort = sortType;
+            updateSortButtonsState(currentSort, sortDirection);
             
             setTimeout(() => {{
                 sortArtists(sortType, sortDirection);
@@ -1698,6 +2146,24 @@ def generate_html_toplist():
                 showLoading();
                 setTimeout(hideLoading, 2000);
             }});
+        }});
+
+        if (artistDetailClose) {{
+            artistDetailClose.addEventListener('click', closeArtistDetail);
+        }}
+
+        if (artistDetailModal) {{
+            artistDetailModal.addEventListener('click', function(event) {{
+                if (event.target === artistDetailModal) {{
+                    closeArtistDetail();
+                }}
+            }});
+        }}
+
+        document.addEventListener('keydown', function(event) {{
+            if (event.key === 'Escape') {{
+                closeArtistDetail();
+            }}
         }});
     </script>
 </body>
@@ -1854,6 +2320,10 @@ def generate_html_songs():
         .btn-sort {{
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
         }}
         
         .btn-sort:hover {{
@@ -1902,6 +2372,21 @@ def generate_html_songs():
 
         .btn-sort.active {{
             background: linear-gradient(135deg, #fd79a8, #e84393);
+            box-shadow: 0 0 0 2px rgba(232, 67, 147, 0.25);
+        }}
+
+        .btn-sort.active::after {{
+            display: inline-block;
+            font-size: 1.2rem;
+            line-height: 1;
+        }}
+
+        .btn-sort.active[data-direction="asc"]::after {{
+            content: "↑";
+        }}
+
+        .btn-sort.active[data-direction="desc"]::after {{
+            content: "↓";
         }}
 
         .stats-section {{
@@ -2206,6 +2691,20 @@ def generate_html_songs():
             sortButtons.forEach(button => {{
                 button.addEventListener('click', handleSort);
             }});
+
+            updateSortButtonsState(currentSort, sortDirection);
+        }}
+
+        function updateSortButtonsState(sortType, direction) {{
+            document.querySelectorAll('[data-sort]').forEach(btn => {{
+                const isActive = btn.dataset.sort === sortType;
+                btn.classList.toggle('active', isActive);
+                if (isActive) {{
+                    btn.setAttribute('data-direction', direction);
+                }} else {{
+                    btn.removeAttribute('data-direction');
+                }}
+            }});
         }}
 
         function handleSearch(e) {{
@@ -2226,10 +2725,6 @@ def generate_html_songs():
             
             const sortType = e.target.closest('[data-sort]').dataset.sort;
             
-            // Update active button
-            document.querySelectorAll('[data-sort]').forEach(btn => btn.classList.remove('active'));
-            e.target.closest('[data-sort]').classList.add('active');
-            
             // Toggle direction if same sort
             if (currentSort === sortType) {{
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -2238,6 +2733,7 @@ def generate_html_songs():
             }}
             
             currentSort = sortType;
+            updateSortButtonsState(currentSort, sortDirection);
             
             setTimeout(() => {{
                 sortSongs(sortType, sortDirection);

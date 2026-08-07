@@ -15,53 +15,55 @@
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-8">
-        <div class="d-flex align-items-center">
-            {% if artist.picture_small %}
-                <img src="{{ artist.picture_small }}" alt="{{ artist.name }}" class="me-3" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%;">
-            {% else %}
-                <div class="me-3 bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%;">
-                    <i class="fas fa-user fa-2x text-muted"></i>
+<div class="card stats-card mb-4">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                {% if artist.picture_small %}
+                    <img src="{{ artist.picture_small }}" alt="{{ artist.name }}" class="artist-image" style="width: 88px; height: 88px; border: 3px solid rgba(255,255,255,0.4); box-shadow: 0 4px 18px rgba(0,0,0,0.2);">
+                {% else %}
+                    <div class="artist-image bg-light d-flex align-items-center justify-content-center" style="width: 88px; height: 88px; border: 3px solid rgba(255,255,255,0.4);">
+                        <i class="fas fa-user fa-2x text-muted"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <h1 class="h2 mb-2 text-white">{{ artist.name }}</h1>
+                    <div class="d-flex gap-2 flex-wrap mb-2">
+                        {% if artist.bInactivate %}
+                            <span class="badge bg-danger">Inaktiv</span>
+                        {% else %}
+                            <span class="badge bg-success">Aktiv</span>
+                        {% endif %}
+                        <span class="badge bg-light text-dark">Popularitet: {{ artist.popularity }}</span>
+                        <span class="badge bg-light text-dark">Följare: {{ "{:,}".format(artist.followers) if artist.followers else 0 }}</span>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% if artist.link %}
+                            <a href="{{ artist.link }}" target="_blank" class="btn btn-spotify btn-sm">
+                                <i class="fab fa-spotify me-1"></i>Spotify
+                            </a>
+                        {% endif %}
+                        {% if artist.apple_music_link %}
+                            <a href="{{ artist.apple_music_link }}" target="_blank" class="btn btn-sm btn-light text-dark">
+                                <i class="fas fa-music me-1"></i>Apple Music
+                            </a>
+                        {% endif %}
+                        {% if artist.youtube_music_link %}
+                            <a href="{{ artist.youtube_music_link }}" target="_blank" class="btn btn-sm btn-light text-dark">
+                                <i class="fab fa-youtube me-1"></i>YouTube Music
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
-            {% endif %}
-            <div>
-                <h1>{{ artist.name }}</h1>
-                <p class="text-muted mb-1">
-                    {% if artist.bInactivate %}
-                        <span class="badge bg-danger">Inaktiv</span>
-                    {% else %}
-                        <span class="badge bg-success">Aktiv</span>
-                    {% endif %}
-                    <span class="badge bg-primary ms-2">Popularitet: {{ artist.popularity }}</span>
-                    <span class="badge bg-info ms-2">Följare: {{ "{:,}".format(artist.followers) if artist.followers else 0 }}</span>
-                </p>
-                {% if artist.link %}
-                    <a href="{{ artist.link }}" target="_blank" class="btn btn-spotify btn-sm">
-                        <i class="fab fa-spotify me-1"></i>Öppna på Spotify
-                    </a>
-                {% endif %}
-                {% if artist.apple_music_link %}
-                    <a href="{{ artist.apple_music_link }}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2">
-                        <i class="fas fa-music me-1"></i>Öppna i Apple Music
-                    </a>
-                {% endif %}
-                {% if artist.youtube_music_link %}
-                    <a href="{{ artist.youtube_music_link }}" target="_blank" class="btn btn-sm btn-outline-danger ms-2">
-                        <i class="fab fa-youtube me-1"></i>Öppna i YouTube Music
-                    </a>
-                {% endif %}
             </div>
-        </div>
-    </div>
-    <div class="col-md-4 text-md-end">
-        <div class="btn-group">
-            <a href="{{ url_for('edit_artist', artist_id=artist.id) }}" class="btn btn-outline-primary">
-                <i class="fas fa-edit me-1"></i>Redigera
-            </a>
-            <button type="button" class="btn btn-outline-danger" onclick="confirmDelete()">
-                <i class="fas fa-trash me-1"></i>Ta bort
-            </button>
+            <div class="btn-group">
+                <a href="{{ url_for('edit_artist', artist_id=artist.id) }}" class="btn btn-outline-light">
+                    <i class="fas fa-edit me-1"></i>Redigera
+                </a>
+                <button type="button" class="btn btn-outline-light" onclick="confirmDelete()">
+                    <i class="fas fa-trash me-1"></i>Ta bort
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -70,41 +72,45 @@
 <div class="row">
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-info-circle me-2"></i>Artistinformation</h5>
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Artistinformation</h5>
+                <span class="badge bg-info text-dark">Samma vy som i appen</span>
             </div>
             <div class="card-body">
-                <table class="table table-borderless table-sm">
-                    <tr>
-                        <td><strong>Spotify ID:</strong></td>
-                        <td><code>{{ artist.id }}</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Popularitet:</strong></td>
-                        <td>
-                            <div class="progress" style="height: 20px;">
-                                <div class="progress-bar bg-{{ 'success' if artist.popularity > 50 else 'warning' if artist.popularity > 20 else 'secondary' }}" 
-                                     style="width: {{ artist.popularity }}%">
-                                    {{ artist.popularity }}%
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Följare:</strong></td>
-                        <td>{{ "{:,}".format(artist.followers) if artist.followers else 0 }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Status:</strong></td>
-                        <td>
-                            {% if artist.bInactivate %}
-                                <span class="badge bg-danger">Inaktiv</span>
-                            {% else %}
-                                <span class="badge bg-success">Aktiv</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                </table>
+                <p class="text-muted small mb-3">Här visas samma kärninformation som i artistkortet, plus administrativ data för webben.</p>
+
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold"><i class="fas fa-fingerprint me-2 text-muted"></i>Spotify ID</span>
+                        <code class="small">{{ artist.id }}</code>
+                    </div>
+
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold"><i class="fas fa-fire me-2 text-muted"></i>Popularitet</span>
+                            <span class="badge bg-{{ 'success' if artist.popularity > 50 else 'warning' if artist.popularity > 20 else 'secondary' }}">{{ artist.popularity }}%</span>
+                        </div>
+                        <div class="progress" style="height: 16px;">
+                            <div class="progress-bar bg-{{ 'success' if artist.popularity > 50 else 'warning' if artist.popularity > 20 else 'secondary' }}" 
+                                 style="width: {{ artist.popularity }}%"></div>
+                        </div>
+                        <div class="form-text mt-1">Visar hur stark artisten är på Spotify just nu.</div>
+                    </div>
+
+                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold"><i class="fas fa-users me-2 text-muted"></i>Följare</span>
+                        <span class="badge bg-info text-dark">{{ "{:,}".format(artist.followers) if artist.followers else 0 }}</span>
+                    </div>
+
+                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold"><i class="fas fa-toggle-on me-2 text-muted"></i>Status</span>
+                        {% if artist.bInactivate %}
+                            <span class="badge bg-danger">Inaktiv</span>
+                        {% else %}
+                            <span class="badge bg-success">Aktiv</span>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
 

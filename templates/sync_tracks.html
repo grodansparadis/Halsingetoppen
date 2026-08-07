@@ -36,25 +36,12 @@
                     </div>
                 {% else %}
                     <form method="POST">
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="update_playlist" name="update_playlist">
-                                <label class="form-check-label" for="update_playlist">
-                                    <strong>Uppdatera Spotify-spellista</strong>
-                                </label>
-                                <div class="form-text">
-                                    Uppdaterar den officiella Hälsingetoppen-spellistan på Spotify med nya låtar.
-                                    <br><strong>OBS:</strong> Kräver användarautentisering och speciella behörigheter.
-                                </div>
-                            </div>
-                        </div>
-                        
                         <div class="alert alert-warning">
                             <h6><i class="fas fa-exclamation-circle me-2"></i>Viktigt att veta</h6>
                             <ul class="mb-0">
                                 <li><strong>Alla befintliga låtar raderas först</strong> från databasen</li>
-                                <li>Hämtar max 10 top tracks per artist</li>
-                                <li>Processen kan ta 10-20 minuter för {{ artist_count }} artister</li>
+                                <li>Hämtar top tracks för aktiva artister</li>
+                                <li>Processen körs i bakgrunden och kan ta flera minuter</li>
                                 <li>Kräver stabil internet-anslutning</li>
                                 <li>Rate limiting tillämpas för att respektera Spotify API</li>
                             </ul>

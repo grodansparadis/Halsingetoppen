@@ -150,6 +150,7 @@ def generate_all_lists(update_spotify=False, include_random_artist_list=False, v
         
         # Step 2: Generate HTML toplist
         logger.info("Step 2/4: Generating HTML toplist...")
+        logger.info("Step 2/4: Toplist uses DB-only mode (no Spotify API calls during static generation)")
         try:
             results['toplist_file'] = generate_html_toplist()
             logger.info(f"✅ Toplist generated: {results['toplist_file']}")
