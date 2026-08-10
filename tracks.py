@@ -86,14 +86,7 @@ con = sqlite3.connect('toppen.sqlite3')
 cur = con.cursor()
 cur_write = con.cursor()
 
-# Remove all entries from table tracks
-try:
-  cur_write.execute("delete from tracks;")  
-  con.commit()
-except:
-  print("* * * * * * * Failed to remove all tracks ")
-
-for row in cur.execute('SELECT * FROM artists ORDER BY name,id'):
+for row in cur.execute('SELECT * FROM artists WHERE bInactivate = 0 OR bInactivate IS NULL ORDER BY name,id'):
   
   # Get artist id
   urn = row[TBL_ID]
@@ -110,41 +103,36 @@ for row in cur.execute('SELECT * FROM artists ORDER BY name,id'):
     logger.error(f"Failed to get top tracks for {artist['name']} (URN: {urn})")
     continue
 
-  if (len(tracks['tracks']) == 0):
-    continue
+  track_items = [item for item in tracks.get('tracks', []) if item]
+  track_add_lst = [item['id'] for item in track_items]
 
-  track_add_lst = []
-  for item in tracks['tracks']:
-    #print(item['popularity'], item['name'], item['album']['album_type'], item['album']['release_date'],  item['external_urls']['spotify'] ) 
-    if not(item is None):
-      track_add_lst.append(item['id']) 
-    sqlstr = "insert into tracks (id, artist_id, name, popularity, album_type, url, release_date) values ("
-    sqlstr += "'" + item['id'] + "',"
-    sqlstr += "'" + artist['id'] + "',"
-    # Remove special characters from name
-    song = item['name']
-    song = song.replace("\"","''")
-    sqlstr += "\"" + song + " \","
-    sqlstr += str(item['popularity']) + ","
-    sqlstr += "'" + item['album']['album_type'] + "',"
-    sqlstr += "'" + item['external_urls']['spotify'] + "',"
-    sqlstr += "'" + item['album']['release_date'] + "'"
-    sqlstr += ");"
-    try:
-      cur_write.execute(sqlstr)  
-      con.commit()
-    except sqlite3.Error as er:
-      print("* * * * * * * Failed to add track to db", sqlstr)
-      print('SQLite error: %s' % (' '.join(er.args)))
-      print("Exception class is: ", er.__class__)
-      continue
+  try:
+    with con:
+      cur_write.execute('DELETE FROM tracks WHERE artist_id = ?', [urn])
+      for item in track_items:
+        cur_write.execute('''
+          INSERT INTO tracks (id, artist_id, name, popularity, album_type, url, release_date)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', [
+          f"{item['id']}:{urn}",
+          urn,
+          item['name'],
+          item['popularity'],
+          item['album']['album_type'],
+          item['external_urls']['spotify'],
+          item['album']['release_date']
+        ])
+  except sqlite3.Error as er:
+    logger.error("Failed to store tracks for %s: %s", artist['name'], er)
+    continue
 
   # Add tracks to playlist -  pp['id']
   if (len(track_add_lst) > 0):
     try:
       sp.user_playlist_add_tracks(username, TOPPEN_ID, track_add_lst, position=None)
-    except:
+    except Exception as error:
       print("* * * * * * * ------> Failed to add tracks to playlist " + list_name + " for " + artist['name'] + " - '" + item['name'] + "'")
+      logger.error("Failed to add tracks to playlist: %s", error)
       #print(pp['id'])
       print(track_add_lst, len(track_add_lst))
       continue

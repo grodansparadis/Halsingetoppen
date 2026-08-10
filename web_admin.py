@@ -63,9 +63,6 @@ def sync_tracks_from_spotify():
 
     conn = get_db_connection()
     try:
-        conn.execute('DELETE FROM tracks')
-        conn.commit()
-
         artist_rows = conn.execute(
             'SELECT * FROM artists WHERE bInactivate = 0 OR bInactivate IS NULL ORDER BY name, id'
         ).fetchall()
@@ -88,24 +85,28 @@ def sync_tracks_from_spotify():
                 error_count += 1
                 continue
 
-            for item in tracks.get('tracks', []):
-                song = item['name'].replace('"', "''")
+            track_items = [item for item in tracks.get('tracks', []) if item]
+            try:
+                with conn:
+                    conn.execute('DELETE FROM tracks WHERE artist_id = ?', [urn])
+                    for item in track_items:
+                        conn.execute('''
+                            INSERT INTO tracks (id, artist_id, name, popularity, album_type, url, release_date)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ''', [
+                            f"{item['id']}:{urn}",
+                            urn,
+                            item['name'],
+                            item['popularity'],
+                            item['album']['album_type'],
+                            item['external_urls']['spotify'],
+                            item['album']['release_date']
+                        ])
+                track_count += len(track_items)
+            except sqlite3.Error:
+                logger.exception("Failed to store top tracks for %s", urn)
+                error_count += 1
 
-                conn.execute('''
-                    INSERT INTO tracks (id, artist_id, name, popularity, album_type, url, release_date)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', [
-                    item['id'],
-                    artist['id'],
-                    song,
-                    item['popularity'],
-                    item['album']['album_type'],
-                    item['external_urls']['spotify'],
-                    item['album']['release_date']
-                ])
-                track_count += 1
-
-            conn.commit()
             rate_limit_delay()
 
         logger.info(
