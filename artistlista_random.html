@@ -59,6 +59,7 @@
     .toolbar {
       display: flex;
       justify-content: flex-end;
+      flex-wrap: wrap;
       gap: 0.5rem;
       margin-bottom: 1rem;
     }
@@ -74,6 +75,15 @@
     }
     .randomize-btn:hover {
       background: #f1f1f1;
+    }
+    .new-artist-tip-btn {
+      background: #0d6efd;
+      border-color: #0d6efd;
+      color: #fff;
+      margin-right: auto;
+    }
+    .new-artist-tip-btn:hover {
+      background: #0b5ed7;
     }
     .artist-list {
       list-style: none;
@@ -552,7 +562,7 @@
 <h1>Hälsingeartister</h1>
 <p class="meta">Detta är en lista med artister från Hälsingland. Listan visas i slumpmässig ordning. • Genererad 2026-08-11 15:07</p>
 <div class="toolbar">
-  <button type="button" class="randomize-btn toggle-tip-form" data-form-id="general-tip-form">Tipsa om artist som saknas</button>
+  <button type="button" class="randomize-btn new-artist-tip-btn toggle-tip-form" data-form-id="general-tip-form">Tipsa om ny artist</button>
   <button id="showLatest" class="randomize-btn" type="button">Visa senaste tillagda</button>
   <button id="randomizeList" class="randomize-btn" type="button">Randomisera ordning</button>
 </div>

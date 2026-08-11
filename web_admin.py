@@ -943,9 +943,9 @@ def download_file(filename):
     flash('File not found', 'error')
     return redirect(url_for('generate_menu'))
 
-def generate_html_toplist():
+def generate_html_toplist(output_file=None):
     """Generate modern, interactive HTML toplist file"""
-    filename = f'topplista-{date.today()}.html'
+    filename = output_file or f'topplista-{date.today()}.html'
     
     conn = get_db_connection()
     
@@ -1103,6 +1103,37 @@ def generate_html_toplist():
             border-radius: 15px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }}
+
+        .new-artist-tip {{
+            margin-top: 1rem;
+        }}
+
+        .new-artist-tip summary {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 25px;
+            background: #0d6efd;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+        }}
+
+        .new-artist-tip summary::-webkit-details-marker {{
+            display: none;
+        }}
+
+        .new-artist-tip summary:hover {{
+            background: #0b5ed7;
+        }}
+
+        .new-artist-tip-form {{
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
         }}
         
         .search-box {{
@@ -1720,6 +1751,47 @@ def generate_html_toplist():
                         </div>
                     </div>
                 </div>
+                <details class="new-artist-tip">
+                    <summary><i class="fas fa-user-plus" aria-hidden="true"></i>Tipsa om ny artist</summary>
+                    <form id="newArtistTipForm" class="new-artist-tip-form" action="/api/artist-tip" method="post">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="tipArtist" class="form-label">Artistens namn</label>
+                                <input id="tipArtist" class="form-control" type="text" name="artist" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tipConnection" class="form-label">Koppling till Hälsingland</label>
+                                <input id="tipConnection" class="form-control" type="text" name="halsingland_connection" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="tipSpotify" class="form-label">Spotify-länk</label>
+                                <input id="tipSpotify" class="form-control" type="url" name="spotify_link" placeholder="https://open.spotify.com/artist/...">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="tipApple" class="form-label">Apple Music-länk</label>
+                                <input id="tipApple" class="form-control" type="url" name="apple_music_link" placeholder="https://music.apple.com/...">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="tipYoutube" class="form-label">YouTube Music-länk</label>
+                                <input id="tipYoutube" class="form-control" type="url" name="youtube_music_link" placeholder="https://music.youtube.com/...">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tipName" class="form-label">Ditt namn</label>
+                                <input id="tipName" class="form-control" type="text" name="namn" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tipEmail" class="form-label">Din e-post</label>
+                                <input id="tipEmail" class="form-control" type="email" name="epost" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="tipInformation" class="form-label">Information om artisten</label>
+                                <textarea id="tipInformation" class="form-control" name="information" rows="4" required></textarea>
+                            </div>
+                        </div>
+                        <input type="hidden" name="source_url" value="">
+                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-paper-plane me-1" aria-hidden="true"></i>Skicka tips</button>
+                    </form>
+                </details>
             </div>
 
             <!-- Artists List -->
@@ -1881,6 +1953,7 @@ def generate_html_toplist():
             initializeArtists();
             setupEventListeners();
             setupInfoButtons();
+            setupNewArtistTip();
             hideLoading();
         }});
 
@@ -2015,6 +2088,46 @@ def generate_html_toplist():
                 button.addEventListener('click', function() {{
                     openArtistDetail(button.closest('.artist-card'));
                 }});
+            }});
+        }}
+
+        function setupNewArtistTip() {{
+            const form = document.getElementById('newArtistTipForm');
+            if (!form) return;
+
+            form.elements.source_url.value = window.location.href;
+            form.addEventListener('submit', async function(event) {{
+                event.preventDefault();
+                const formData = new FormData(form);
+
+                try {{
+                    const response = await fetch('/api/artist-tip', {{
+                        method: 'POST',
+                        body: formData
+                    }});
+                    if (!response.ok) throw new Error('Kunde inte skicka tipset');
+
+                    alert('Tack! Ditt tips har skickats.');
+                    form.reset();
+                    form.elements.source_url.value = window.location.href;
+                    form.closest('details').open = false;
+                }} catch (error) {{
+                    const subject = 'Artisttips: ' + (formData.get('artist') || '');
+                    const body = [
+                        'Artist: ' + (formData.get('artist') || ''),
+                        'Koppling till Hälsingland: ' + (formData.get('halsingland_connection') || '-'),
+                        'Spotify-länk: ' + (formData.get('spotify_link') || '-'),
+                        'Apple Music-länk: ' + (formData.get('apple_music_link') || '-'),
+                        'YouTube Music-länk: ' + (formData.get('youtube_music_link') || '-'),
+                        'Namn: ' + (formData.get('namn') || ''),
+                        'E-post: ' + (formData.get('epost') || ''),
+                        'Källa: ' + (formData.get('source_url') || window.location.href),
+                        '',
+                        'Information:',
+                        formData.get('information') || ''
+                    ].join('\\n');
+                    window.location.href = 'mailto:toppen@grodansparadis.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+                }}
             }});
         }}
 

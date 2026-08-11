@@ -86,6 +86,7 @@ def generate_random_artist_list(db_path: str = DB_PATH, output_file: str = OUTPU
     .toolbar {
       display: flex;
       justify-content: flex-end;
+      flex-wrap: wrap;
       gap: 0.5rem;
       margin-bottom: 1rem;
     }
@@ -101,6 +102,15 @@ def generate_random_artist_list(db_path: str = DB_PATH, output_file: str = OUTPU
     }
     .randomize-btn:hover {
       background: #f1f1f1;
+    }
+    .new-artist-tip-btn {
+      background: #0d6efd;
+      border-color: #0d6efd;
+      color: #fff;
+      margin-right: auto;
+    }
+    .new-artist-tip-btn:hover {
+      background: #0b5ed7;
     }
     .artist-list {
       list-style: none;
@@ -584,7 +594,7 @@ def generate_random_artist_list(db_path: str = DB_PATH, output_file: str = OUTPU
           f"<p class=\"meta\">Detta är en lista med artister från Hälsingland. Listan visas i slumpmässig ordning. • Genererad {escape(datetime.now().strftime('%Y-%m-%d %H:%M'))}</p>\n"
         )
         f.write("<div class=\"toolbar\">\n")
-        f.write("  <button type=\"button\" class=\"randomize-btn toggle-tip-form\" data-form-id=\"general-tip-form\">Tipsa om artist som saknas</button>\n")
+        f.write("  <button type=\"button\" class=\"randomize-btn new-artist-tip-btn toggle-tip-form\" data-form-id=\"general-tip-form\">Tipsa om ny artist</button>\n")
         f.write("  <button id=\"showLatest\" class=\"randomize-btn\" type=\"button\">Visa senaste tillagda</button>\n")
         f.write("  <button id=\"randomizeList\" class=\"randomize-btn\" type=\"button\">Randomisera ordning</button>\n")
         f.write("</div>\n")
