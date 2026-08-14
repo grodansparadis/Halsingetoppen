@@ -16,7 +16,7 @@ import os
 import time
 import logging
 import json
-from threading import Thread
+from threading import Lock, Thread
 
 # Import our Spotify utilities
 from spotify_utils import (
@@ -43,10 +43,16 @@ DB_PATH = 'toppen.sqlite3'
 # Initialize Spotify client
 sp = None
 try:
-    sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
+    sp = spotipy.Spotify(
+        client_credentials_manager=SpotifyClientCredentials(),
+        retries=0,
+        status_retries=0,
+    )
     logger.info("Spotify client initialized successfully")
 except Exception as e:
     logger.warning(f"Spotify credentials not configured: {e}. Some features may not work.")
+
+sync_tracks_lock = Lock()
 
 def get_db_connection():
     """Get database connection"""
@@ -57,6 +63,18 @@ def get_db_connection():
 
 def sync_tracks_from_spotify():
     """Fetch Spotify top tracks for all active artists and store them in the database."""
+    if not sync_tracks_lock.acquire(blocking=False):
+        logger.warning("Track synchronization is already running")
+        return
+
+    try:
+        _sync_tracks_from_spotify()
+    finally:
+        sync_tracks_lock.release()
+
+
+def _sync_tracks_from_spotify():
+    """Run one Spotify track synchronization job."""
     if not sp:
         logger.error("Spotify client is not configured; cannot sync tracks")
         return
@@ -914,8 +932,11 @@ def sync_tracks():
             if not sp:
                 flash('Spotify not configured', 'error')
                 return redirect(url_for('sync_tracks'))
-            Thread(target=sync_tracks_from_spotify, daemon=True).start()
-            flash('Synkronisering startade i bakgrunden. Du kan lämna sidan medan jobbet körs.', 'success')
+            if sync_tracks_lock.locked():
+                flash('En låtsynkronisering körs redan.', 'warning')
+            else:
+                Thread(target=sync_tracks_from_spotify, daemon=True).start()
+                flash('Synkronisering startade i bakgrunden. Du kan lämna sidan medan jobbet körs.', 'success')
             
         except Exception as e:
             flash(f'Error syncing tracks: {e}', 'error')

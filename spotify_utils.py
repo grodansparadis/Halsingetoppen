@@ -11,11 +11,14 @@ from spotipy.exceptions import SpotifyException
 # Set up logging
 logger = logging.getLogger(__name__)
 
+MAX_RETRY_DELAY = 60
+
 def spotify_request_with_retry(
     spotify_func: Callable, 
     *args, 
     max_retries: int = 3,
     base_delay: float = 1.0,
+    max_retry_delay: float = MAX_RETRY_DELAY,
     **kwargs
 ) -> Any:
     """
@@ -57,6 +60,10 @@ def spotify_request_with_retry(
             
             # Check if this is a rate limit error (429)
             if e.http_status == 429:
+                if attempt >= max_retries:
+                    logger.error("Spotify rate limit persisted after %s retries", max_retries)
+                    raise
+
                 # Extract Retry-After header value
                 retry_after = None
                 if hasattr(e, 'headers') and e.headers:
@@ -65,6 +72,13 @@ def spotify_request_with_retry(
                 if retry_after:
                     try:
                         retry_seconds = int(retry_after)
+                        if retry_seconds > max_retry_delay:
+                            logger.error(
+                                "Spotify requested a %s second retry delay; aborting after configured limit of %s seconds",
+                                retry_seconds,
+                                max_retry_delay,
+                            )
+                            raise
                         logger.warning(f"Rate limited by Spotify. Waiting {retry_seconds} seconds as specified in Retry-After header")
                         time.sleep(retry_seconds)
                         continue
